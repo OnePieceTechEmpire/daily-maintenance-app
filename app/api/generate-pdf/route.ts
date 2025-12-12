@@ -2,7 +2,8 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import puppeteer from "puppeteer-core";
-import chromium from "chrome-aws-lambda";
+import chromium from "@sparticuz/chromium";
+
 import { supabase } from "@/lib/supabase";
 
 export async function POST(req: Request) {
@@ -129,9 +130,10 @@ export async function POST(req: Request) {
     // 4️⃣ Puppeteer → Generate PDF
 const browser = await puppeteer.launch({
   args: chromium.args,
-  executablePath: await chromium.executablePath,
-  headless: chromium.headless,
+  executablePath: await chromium.executablePath(),
+  headless: true,
 });
+
 
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
