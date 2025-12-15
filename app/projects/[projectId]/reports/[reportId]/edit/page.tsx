@@ -232,9 +232,11 @@ async function cleanSummary() {
       .eq("id", reportId);
 
       // 🔥 Generate PDF
+// 2️⃣ Trigger PDF generation
 await fetch("/api/generate-pdf", {
   method: "POST",
-  body: JSON.stringify({ reportId })
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ reportId }),
 });
 
     router.push(`/projects/${projectId}/dashboard`);
