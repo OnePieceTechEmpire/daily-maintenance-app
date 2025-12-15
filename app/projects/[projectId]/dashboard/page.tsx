@@ -96,7 +96,7 @@ return (
 
     <div>
       <h1 className="text-3xl font-bold">{project?.name || "Loading..."}</h1>
-      <p className="text-blue-100 text-sm mt-1">{project?.description}</p>
+      <p className="text-white/80 text-sm mt-1">{project?.description}</p>
     </div>
 
     {/* DROPDOWN MENU */}
