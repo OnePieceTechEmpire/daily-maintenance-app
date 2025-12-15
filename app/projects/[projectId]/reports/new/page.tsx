@@ -21,6 +21,8 @@ export default function NewReportPage() {
   const [initialized, setInitialized] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [cleaning, setCleaning] = useState(false);
+  const [captionDrafts, setCaptionDrafts] = useState<Record<string, string>>({});
+
   
 
 
@@ -103,6 +105,15 @@ async function loadImages(reportId: string) {
   setImages(data || []);
 }
 
+useEffect(() => {
+  const drafts: Record<string, string> = {};
+  images.forEach((img) => {
+    drafts[img.id] = img.caption || "";
+  });
+  setCaptionDrafts(drafts);
+}, [images]);
+
+
   // -----------------------------------------------
   // Load existing images
   // -----------------------------------------------
@@ -174,6 +185,21 @@ async function handleSingleUpload(originalFile: File) {
   }
 }
 
+async function saveCaption(imageId: string) {
+  const caption = captionDrafts[imageId] || "";
+
+  await supabase
+    .from("report_images")
+    .update({ caption })
+    .eq("id", imageId);
+
+  // Optional: sync images state (safe)
+  setImages((prev) =>
+    prev.map((img) =>
+      img.id === imageId ? { ...img, caption } : img
+    )
+  );
+}
 
 
 
@@ -368,13 +394,20 @@ return (
 
               {/* CAPTION INPUT */}
               <div className="p-3 border-t bg-gray-50">
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 rounded border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none text-sm"
-                  placeholder="Add caption..."
-                  value={img.caption || ""}
-                  onChange={(e) => updateCaption(img.id, e.target.value)}
-                />
+<input
+  type="text"
+  className="w-full px-3 py-2 rounded border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none text-sm"
+  placeholder="Add caption..."
+  value={captionDrafts[img.id] || ""}
+  onChange={(e) =>
+    setCaptionDrafts((prev) => ({
+      ...prev,
+      [img.id]: e.target.value,
+    }))
+  }
+  onBlur={() => saveCaption(img.id)}
+/>
+
               </div>
             </div>
           ))}
