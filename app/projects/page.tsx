@@ -58,19 +58,14 @@ const [sort, setSort] = useState("newest");
 return (
   <div className="min-h-screen bg-gray-100">
 
-    {/* HERO SECTION */}
-<div
-  className="
-    bg-gradient-to-r from-blue-600 to-blue-800
-    pt-[env(safe-area-inset-top)]
-    p-6
-    text-white
-    rounded-b-3xl
-    shadow-lg
-  "
->
+{/* HEADER */}
+<div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
 
+  {/* SAFE AREA TOP */}
+  <div className="h-[env(safe-area-inset-top)]" />
 
+  {/* HEADER CONTENT */}
+  <div className="p-6 rounded-b-3xl">
       <div className="max-w-6xl mx-auto">
 
         <div className="flex justify-between items-center">
@@ -108,6 +103,7 @@ return (
 
         </div>
       </div>
+    </div>
     </div>
 
     <div className="p-5 max-w-6xl mx-auto">

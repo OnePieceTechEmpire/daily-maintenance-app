@@ -277,17 +277,13 @@ await fetch("/api/generate-pdf", {
 return (
   <div className="min-h-screen bg-gray-100">
 
-    {/* HEADER */}
-<div
-  className="
-    bg-gradient-to-r from-blue-600 to-blue-800
-    pt-[env(safe-area-inset-top)]
-    p-6
-    text-white
-    rounded-b-3xl
-    shadow-lg
-  "
->
+{/* HEADER */}
+<div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+
+  {/* SAFE AREA TOP (THIS IS THE KEY) */}
+  <div className="h-[env(safe-area-inset-top)]" />
+
+  <div className="p-6 rounded-b-3xl">
 
 
       <div className="max-w-4xl mx-auto">
@@ -295,7 +291,7 @@ return (
         <p className="text-white text-sm mt-1 opacity-90">{reportDate}</p>
       </div>
     </div>
-
+</div>
     {/* CONTENT */}
     <div className="max-w-4xl mx-auto p-5 space-y-6">
 
