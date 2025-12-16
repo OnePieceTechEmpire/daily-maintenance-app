@@ -73,7 +73,7 @@ export default function AllReportsPage() {
 
 {/* HEADER */}
 {/* HEADER */}
-<div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+<div className="bg-blue-700 text-white shadow-lg">
 
   {/* SAFE AREA TOP */}
   <div className="h-[env(safe-area-inset-top)]" />
