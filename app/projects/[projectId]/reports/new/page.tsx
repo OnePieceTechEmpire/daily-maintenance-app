@@ -328,12 +328,18 @@ return (
   <div className="min-h-screen bg-gray-100">
 
     {/* HEADER */}
-    <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-white rounded-b-3xl shadow-lg">
+    <div className="
+  relative isolate
+  bg-gradient-to-r from-blue-600 to-blue-800
+  p-6 text-white rounded-b-3xl shadow-lg
+">
+
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold">Daily Report</h1>
-        <p className="text-blue-100 text-sm mt-1">
-          {selectedDate}
-        </p>
+<p className="text-white text-sm mt-1 opacity-90">
+  {selectedDate}
+</p>
+
       </div>
     </div>
 

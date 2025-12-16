@@ -91,12 +91,20 @@ return (
 
     {/* PROJECT HEADER */}
 {/* PROJECT HEADER */}
-<div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-white rounded-b-3xl shadow-lg">
+<div className="
+  relative isolate
+  bg-gradient-to-r from-blue-600 to-blue-800
+  p-6 text-white
+  rounded-b-3xl shadow-lg
+">
+
   <div className="max-w-5xl mx-auto flex justify-between items-start">
 
     <div>
       <h1 className="text-3xl font-bold">{project?.name || "Loading..."}</h1>
-      <p className="text-white/80 text-sm mt-1">{project?.description}</p>
+            <p className="text-white text-sm mt-1 opacity-90">
+        {project?.description}
+      </p>
     </div>
 
     {/* DROPDOWN MENU */}

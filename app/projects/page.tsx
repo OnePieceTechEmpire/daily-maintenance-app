@@ -59,7 +59,13 @@ return (
   <div className="min-h-screen bg-gray-100">
 
     {/* HERO SECTION */}
-    <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-white rounded-b-3xl shadow-lg">
+    <div className="
+  relative isolate
+  bg-gradient-to-r from-blue-600 to-blue-800
+  p-6 text-white
+  rounded-b-3xl shadow-lg
+">
+
       <div className="max-w-6xl mx-auto">
 
         <div className="flex justify-between items-center">
@@ -74,9 +80,10 @@ return (
           </button>
         </div>
 
-        <p className="text-blue-100 mt-1 text-sm">
-          Manage daily maintenance reports with ease
-        </p>
+        <p className="text-white mt-1 text-sm opacity-90">
+  Manage daily maintenance reports with ease
+</p>
+
 
         {/* Search + Sort */}
         <div className="mt-5 flex flex-col sm:flex-row sm:items-center gap-3">
@@ -93,18 +100,6 @@ return (
     onChange={(e) => setSearch(e.target.value)}
   />
 </div>
-
-
-          {/* Sort Dropdown 
-          <select
-            className="px-4 py-2 rounded-lg shadow-sm border border-blue-200 text-gray-800 focus:ring-2 focus:ring-blue-300"
-            onChange={(e) => setSort(e.target.value)}
-          >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="az">A → Z</option>
-            <option value="za">Z → A</option>
-          </select>*/}
 
         </div>
       </div>

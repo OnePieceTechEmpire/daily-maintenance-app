@@ -49,7 +49,12 @@ return (
   <div className="min-h-screen bg-gray-100">
 
     {/* HEADER */}
-<div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-white rounded-b-3xl shadow-lg">
+<div className="
+  relative isolate
+  bg-gradient-to-r from-blue-600 to-blue-800
+  p-6 text-white rounded-b-3xl shadow-lg
+">
+
   <div className="max-w-4xl mx-auto flex justify-between items-center">
 
     <div className="flex items-center gap-4">
@@ -76,7 +81,10 @@ return (
 
       <div>
         <h1 className="text-2xl font-bold">Daily Report</h1>
-        <p className="text-blue-100 text-sm mt-1">{report.report_date}</p>
+        <p className="text-white text-sm mt-1 opacity-90">
+  {report.report_date}
+</p>
+
       </div>
     </div>
 
