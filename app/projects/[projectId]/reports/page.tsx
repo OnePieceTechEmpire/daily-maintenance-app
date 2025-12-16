@@ -72,11 +72,17 @@ export default function AllReportsPage() {
     <div className="min-h-screen bg-gray-100">
 
 {/* HEADER */}
-<div className="
-  relative isolate
-  bg-gradient-to-r from-blue-600 to-blue-800
-  p-6 text-white rounded-b-3xl shadow-lg
-">
+<div
+  className="
+    bg-gradient-to-r from-blue-600 to-blue-800
+    pt-[env(safe-area-inset-top)]
+    p-6
+    text-white
+    rounded-b-3xl
+    shadow-lg
+  "
+>
+
 
   <div className="max-w-5xl mx-auto flex justify-between items-center">
 

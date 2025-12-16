@@ -25,7 +25,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="bg-white">
       <head>
-  <meta name="theme-color" content="#2563eb" />
   <meta name="color-scheme" content="only light" />
 
       </head>
