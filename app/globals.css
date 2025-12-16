@@ -1,93 +1,14 @@
 @import "tailwindcss";
 
-/* ================================
-   🔒 HARD STOP MOBILE COLOR OVERRIDES
-   ================================ */
-
-/* Prevent iOS / Android auto color adjustments */
-* {
-  -webkit-text-size-adjust: 100%;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Disable forced color schemes */
+/* FORCE LIGHT MODE — NO SYSTEM OVERRIDE */
 html {
-  forced-color-adjust: none;
-  -webkit-forced-color-adjust: none;
+  color-scheme: light;
   background-color: #ffffff;
 }
 
-/* ================================
-   🌞 GLOBAL LIGHT MODE ENFORCEMENT
-   ================================ */
-
 body {
-  background-color: #f3f4f6 !important; /* Tailwind gray-100 */
-  color: #111827 !important;           /* Tailwind gray-900 */
+  margin: 0;
+  background-color: #f3f4f6; /* gray-100 */
+  color: #111827; /* gray-900 */
   font-family: Arial, Helvetica, sans-serif;
-  forced-color-adjust: none;
-  -webkit-forced-color-adjust: none;
-}
-
-/* ================================
-   ✍️ FORM ELEMENT FIX (VERY IMPORTANT)
-   ================================ */
-
-input,
-textarea,
-select,
-option {
-  color: #111827 !important;
-  background-color: #ffffff !important;
-  caret-color: #111827 !important;
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: #6b7280 !important; /* gray-500 */
-}
-
-/* ================================
-   🧾 HEADERS & TEXT SAFETY
-   ================================ */
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-p,
-span,
-label {
-  color: inherit;
-}
-
-/* ================================
-   🖼️ IMAGES & MEDIA
-   ================================ */
-
-img {
-  max-width: 100%;
-  height: auto;
-}
-
-/* ================================
-   🚫 DISABLE DARK MODE MEDIA QUERY
-   ================================ */
-
-/* DO NOT allow system dark mode to change colors */
-@media (prefers-color-scheme: dark) {
-  html,
-  body {
-    background-color: #f3f4f6 !important;
-    color: #111827 !important;
-  }
-
-  input,
-  textarea,
-  select {
-    background-color: #ffffff !important;
-    color: #111827 !important;
-  }
 }
