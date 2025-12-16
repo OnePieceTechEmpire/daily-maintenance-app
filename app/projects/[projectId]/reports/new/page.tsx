@@ -441,31 +441,39 @@ return (
   />
 
   <div className="mt-4 flex items-center gap-3">
-<button
-  onClick={cleanSummary}
-  className="
-    relative inline-flex items-center justify-center
-    bg-gradient-to-r from-blue-500 to-blue-600
-    text-white font-semibold text-sm py-2 px-6
-    rounded-2xl shadow-md
-    hover:from-blue-600 hover:to-blue-700
-    transition-all duration-300 ease-in-out
-    active:scale-95
-  "
-  disabled={cleaning}
->
-  {cleaning ? (
-    <div className="flex items-center gap-2">
-      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-      Improving...
-    </div>
-  ) : (
-    <div className="flex items-center gap-2">
-      <SparklesIcon className="w-5 h-5 text-white animate-pulse" />
-      Clean Summary with AI
-    </div>
-  )}
-</button>
+<div className="mt-4">
+  <button
+    onClick={cleanSummary}
+    disabled={cleaning}
+    className="
+      w-full
+      flex items-center justify-center gap-2
+      bg-blue-600
+      text-white font-semibold text-sm
+      py-3 px-4
+      rounded-xl
+      shadow
+      hover:bg-blue-700
+      active:scale-95
+      transition
+      disabled:opacity-60
+      disabled:cursor-not-allowed
+    "
+  >
+    {cleaning ? (
+      <>
+        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        Improving summary…
+      </>
+    ) : (
+      <>
+        <SparklesIcon className="w-5 h-5" />
+        Clean Summary with AI
+      </>
+    )}
+  </button>
+</div>
+
 
 
     {cleaning && (

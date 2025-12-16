@@ -48,12 +48,14 @@ export default function ViewReportPage() {
 return (
   <div className="min-h-screen bg-gray-100">
 
-    {/* HEADER */}
-<div className="
-  relative isolate
-  bg-gradient-to-r from-blue-600 to-blue-800
-  p-6 text-white rounded-b-3xl shadow-lg
-">
+{/* HEADER */}
+<div className="bg-blue-700 text-white shadow-lg">
+
+  {/* SAFE AREA TOP */}
+  <div className="h-[env(safe-area-inset-top)]" />
+
+  {/* HEADER CONTENT */}
+  <div className="p-6 rounded-b-3xl">
 
   <div className="max-w-4xl mx-auto flex justify-between items-center">
 
@@ -86,6 +88,7 @@ return (
 </p>
 
       </div>
+    </div>
     </div>
 
         {/* PDF DOWNLOAD BUTTON */}
