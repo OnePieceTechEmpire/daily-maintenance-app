@@ -38,14 +38,18 @@ export async function POST(req: Request) {
       .eq("report_id", reportId);
 
     // Generate PDF
-    const pdfBuffer = await renderToBuffer(
-      <ReportPDF
-        projectName={report.projects.name}
-        reportDate={report.report_date}
-        summary={report.summary}
-        images={images || []}
-      />
-    );
+const pdfBuffer = await renderToBuffer(
+  <ReportPDF
+    projectName={report.projects.name}
+    reportDate={report.report_date}
+    summary={report.summary}
+    images={images || []}
+    weather={report.weather || []}
+    materials={report.materials || []}
+    equipment={report.equipment || []}
+    workers={report.workers}
+  />
+);
 
     const filePath = `reports/${reportId}.pdf`;
 

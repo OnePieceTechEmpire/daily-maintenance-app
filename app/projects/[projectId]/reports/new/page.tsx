@@ -22,6 +22,22 @@ export default function NewReportPage() {
   const [uploading, setUploading] = useState(false);
   const [cleaning, setCleaning] = useState(false);
   const [captionDrafts, setCaptionDrafts] = useState<Record<string, string>>({});
+  const [weather, setWeather] = useState<any[]>([]);
+const [materials, setMaterials] = useState<any[]>([]);
+const [equipment, setEquipment] = useState<
+  { name: string; qty: string; status: string; note?: string }[]
+>([]);
+const [workers, setWorkers] = useState({
+  partition: 0,
+  ceiling: 0,
+  mne: 0,
+  flooring: 0,
+  brickwork: 0,
+  carpenter: 0,
+  painter: 0,
+  others: [] as { label: string; count: number }[],
+});
+
 
   
 
@@ -288,6 +304,27 @@ async function deleteImage(img: any) {
       .eq("id", reportId);
   }
 
+
+  // -----------------------------------------------
+  // Save Details
+  // -----------------------------------------------
+  async function autosaveExtraFields(updated?: Partial<any>) {
+  if (!reportId) return;
+
+  await supabase
+    .from("daily_reports")
+    .update({
+      workers,
+      weather,
+      materials,
+      equipment,
+      status: "draft",
+      ...updated, // optional override
+    })
+    .eq("id", reportId);
+}
+
+
   // -----------------------------------------------
   // Submit Report
   // -----------------------------------------------
@@ -480,6 +517,396 @@ return (
       <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
     )}
   </div>
+</div>
+
+
+{/* WORKERS SECTION */}
+<div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
+  <h3 className="font-semibold text-gray-800 mb-4">Workers on Site</h3>
+
+  <div className="space-y-3">
+    {[
+      ["partition", "Partition"],
+      ["ceiling", "Ceiling"],
+      ["mne", "M&E"],
+      ["flooring", "Flooring"],
+      ["brickwork", "Brick Work"],
+      ["carpenter", "Carpenter"],
+      ["painter", "Painter"],
+    ].map(([key, label]) => (
+      <div key={key} className="flex justify-between items-center">
+        <span className="text-sm text-gray-700">{label}</span>
+        <input
+          type="number"
+          min={0}
+          className="w-20 px-2 py-1 border rounded text-center"
+          value={(workers as any)[key]}
+          onChange={(e) => {
+            const value = Number(e.target.value);
+            setWorkers((prev) => {
+              const updated = { ...prev, [key]: value };
+              autosaveExtraFields({ workers: updated });
+              return updated;
+            });
+          }}
+        />
+      </div>
+    ))}
+  </div>
+
+  {/* OTHERS */}
+  <div className="mt-5">
+    <h4 className="text-sm font-semibold text-gray-700 mb-2">Others</h4>
+
+    {workers.others.map((item, index) => (
+      <div key={index} className="flex gap-2 mb-2">
+        <input
+          type="text"
+          placeholder="Department"
+          className="flex-1 px-2 py-1 border rounded"
+          value={item.label}
+          onChange={(e) => {
+            const updated = [...workers.others];
+            updated[index].label = e.target.value;
+            const newWorkers = { ...workers, others: updated };
+            setWorkers(newWorkers);
+            autosaveExtraFields({ workers: newWorkers });
+          }}
+        />
+
+        <input
+          type="number"
+          min={0}
+          className="w-20 px-2 py-1 border rounded text-center"
+          value={item.count}
+          onChange={(e) => {
+            const updated = [...workers.others];
+            updated[index].count = Number(e.target.value);
+            const newWorkers = { ...workers, others: updated };
+            setWorkers(newWorkers);
+            autosaveExtraFields({ workers: newWorkers });
+          }}
+        />
+
+        <button
+          className="text-red-500 text-sm"
+          onClick={() => {
+            const updated = workers.others.filter((_, i) => i !== index);
+            const newWorkers = { ...workers, others: updated };
+            setWorkers(newWorkers);
+            autosaveExtraFields({ workers: newWorkers });
+          }}
+        >
+          ✕
+        </button>
+      </div>
+    ))}
+
+    <button
+      className="mt-2 text-sm text-blue-600 font-semibold"
+      onClick={() => {
+        const newWorkers = {
+          ...workers,
+          others: [...workers.others, { label: "", count: 0 }],
+        };
+        setWorkers(newWorkers);
+        autosaveExtraFields({ workers: newWorkers });
+      }}
+    >
+      + Add Other Department
+    </button>
+  </div>
+</div>
+
+{/* WEATHER SECTION */}
+<div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
+  <h3 className="font-semibold text-gray-800 mb-4">Weather Conditions</h3>
+
+  {weather.map((w, index) => (
+    <div key={index} className="flex flex-col sm:flex-row gap-2 mb-3">
+
+      {/* FROM */}
+      <input
+        type="time"
+        className="px-3 py-2 border rounded w-full sm:w-32"
+        value={w.from}
+        onChange={(e) => {
+          const updated = [...weather];
+          updated[index].from = e.target.value;
+          setWeather(updated);
+          autosaveExtraFields({ weather: updated });
+        }}
+      />
+
+      {/* TO */}
+      <input
+        type="time"
+        className="px-3 py-2 border rounded w-full sm:w-32"
+        value={w.to}
+        onChange={(e) => {
+          const updated = [...weather];
+          updated[index].to = e.target.value;
+          setWeather(updated);
+          autosaveExtraFields({ weather: updated });
+        }}
+      />
+
+      {/* CONDITION */}
+      <select
+        className="px-3 py-2 border rounded w-full sm:flex-1"
+        value={w.condition}
+        onChange={(e) => {
+          const updated = [...weather];
+          updated[index].condition = e.target.value;
+          setWeather(updated);
+          autosaveExtraFields({ weather: updated });
+        }}
+      >
+        <option value="">Select weather</option>
+        <option value="Sunny">Sunny</option>
+        <option value="Cloudy">Cloudy</option>
+        <option value="Rain">Rain</option>
+        <option value="Heavy Rain">Heavy Rain</option>
+        <option value="Thunderstorm">Thunderstorm</option>
+      </select>
+
+      {/* DELETE */}
+      <button
+        className="text-red-500 text-sm px-2"
+        onClick={() => {
+          const updated = weather.filter((_, i) => i !== index);
+          setWeather(updated);
+          autosaveExtraFields({ weather: updated });
+        }}
+      >
+        ✕
+      </button>
+    </div>
+  ))}
+
+  {/* ADD WEATHER */}
+  <button
+    className="mt-2 text-sm text-blue-600 font-semibold"
+    onClick={() => {
+      const updated = [
+        ...weather,
+        { from: "", to: "", condition: "" },
+      ];
+      setWeather(updated);
+      autosaveExtraFields({ weather: updated });
+    }}
+  >
+    + Add Weather Period
+  </button>
+</div>
+
+{/* MATERIALS DELIVERED */}
+<div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
+  <h3 className="font-semibold text-gray-800 mb-4">
+    Materials Delivered
+  </h3>
+
+  {materials.map((m, index) => (
+    <div
+      key={index}
+      className="grid grid-cols-1 sm:grid-cols-5 gap-2 mb-3"
+    >
+
+      {/* MATERIAL NAME */}
+      <input
+        type="text"
+        placeholder="Material"
+        className="px-3 py-2 border rounded sm:col-span-2"
+        value={m.name}
+        onChange={(e) => {
+          const updated = [...materials];
+          updated[index].name = e.target.value;
+          setMaterials(updated);
+          autosaveExtraFields({ materials: updated });
+        }}
+      />
+
+      {/* QUANTITY */}
+      <input
+        type="number"
+        placeholder="Qty"
+        className="px-3 py-2 border rounded"
+        value={m.qty}
+        onChange={(e) => {
+          const updated = [...materials];
+          updated[index].qty = e.target.value;
+          setMaterials(updated);
+          autosaveExtraFields({ materials: updated });
+        }}
+      />
+
+      {/* UNIT */}
+      <select
+        className="px-3 py-2 border rounded"
+        value={m.unit}
+        onChange={(e) => {
+          const updated = [...materials];
+          updated[index].unit = e.target.value;
+          setMaterials(updated);
+          autosaveExtraFields({ materials: updated });
+        }}
+      >
+        <option value="">Unit</option>
+        <option value="bag">Bag</option>
+        <option value="pcs">Pcs</option>
+        <option value="kg">Kg</option>
+        <option value="ton">Ton</option>
+        <option value="m2">m²</option>
+        <option value="m3">m³</option>
+      </select>
+
+
+      {/* NOTE */}
+      <input
+        type="text"
+        placeholder="Remark (optional)"
+        className="px-3 py-2 border rounded sm:col-span-5"
+        value={m.note || ""}
+        onChange={(e) => {
+          const updated = [...materials];
+          updated[index].note = e.target.value;
+          setMaterials(updated);
+          autosaveExtraFields({ materials: updated });
+        }}
+      />
+      {/* DELETE */}
+      <button
+        className="text-red-500 text-sm px-2"
+        onClick={() => {
+          const updated = materials.filter((_, i) => i !== index);
+          setMaterials(updated);
+          autosaveExtraFields({ materials: updated });
+        }}
+      >
+        ✕
+      </button>
+
+
+    </div>
+  ))}
+
+  {/* ADD MATERIAL */}
+  <button
+    className="mt-2 text-sm text-blue-600 font-semibold"
+    onClick={() => {
+      const updated = [
+        ...materials,
+        { name: "", qty: "", unit: "" },
+      ];
+      setMaterials(updated);
+      autosaveExtraFields({ materials: updated });
+    }}
+  >
+    + Add Material
+  </button>
+</div>
+
+{/* MACHINERY / EQUIPMENT */}
+<div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
+  <h3 className="font-semibold text-gray-800 mb-4">
+    Machinery / Equipment
+  </h3>
+
+  {equipment.map((e, index) => (
+    <div
+      key={index}
+      className="grid grid-cols-1 sm:grid-cols-6 gap-2 mb-3"
+    >
+
+      {/* EQUIPMENT NAME */}
+      <input
+        type="text"
+        placeholder="Equipment"
+        className="px-3 py-2 border rounded sm:col-span-2"
+        value={e.name}
+        onChange={(ev) => {
+          const updated = [...equipment];
+          updated[index].name = ev.target.value;
+          setEquipment(updated);
+          autosaveExtraFields({ equipment: updated });
+        }}
+      />
+
+      {/* QUANTITY */}
+      <input
+        type="number"
+        placeholder="Qty"
+        className="px-3 py-2 border rounded"
+        value={e.qty}
+        onChange={(ev) => {
+          const updated = [...equipment];
+          updated[index].qty = ev.target.value;
+          setEquipment(updated);
+          autosaveExtraFields({ equipment: updated });
+        }}
+      />
+
+      {/* STATUS 
+      <select
+        className="px-3 py-2 border rounded"
+        value={e.status}
+        onChange={(ev) => {
+          const updated = [...equipment];
+          updated[index].status = ev.target.value;
+          setEquipment(updated);
+          autosaveExtraFields({ equipment: updated });
+        }}
+      >
+        <option value="">Status</option>
+        <option value="in-use">In Use</option>
+        <option value="idle">Idle</option>
+        <option value="breakdown">Breakdown</option>
+      </select>*/}
+
+
+
+      {/* NOTE */}
+      <input
+        type="text"
+        placeholder="Remark (optional)"
+        className="px-3 py-2 border rounded sm:col-span-6"
+        value={e.note || ""}
+        onChange={(ev) => {
+          const updated = [...equipment];
+          updated[index].note = ev.target.value;
+          setEquipment(updated);
+          autosaveExtraFields({ equipment: updated });
+        }}
+      />
+      {/* DELETE */}
+      <button
+        className="text-red-500 text-sm px-2"
+        onClick={() => {
+          const updated = equipment.filter((_, i) => i !== index);
+          setEquipment(updated);
+          autosaveExtraFields({ equipment: updated });
+        }}
+      >
+        ✕
+      </button>
+
+    </div>
+  ))}
+
+  {/* ADD EQUIPMENT */}
+  <button
+    className="mt-2 text-sm text-blue-600 font-semibold"
+    onClick={() => {
+      const updated = [
+        ...equipment,
+        { name: "", qty: "", status: "" },
+      ];
+      setEquipment(updated);
+      autosaveExtraFields({ equipment: updated });
+    }}
+  >
+    + Add Equipment
+  </button>
 </div>
 
 

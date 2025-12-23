@@ -7,6 +7,36 @@ import {
   StyleSheet,
 } from "@react-pdf/renderer";
 
+type WeatherItem = {
+  from: string;
+  to: string;
+  condition: string;
+};
+
+type MaterialItem = {
+  name: string;
+  qty: string;
+};
+
+type EquipmentItem = {
+  name: string;
+  qty: string;
+  status: string;
+  note?: string;
+};
+
+type Workers = {
+  partition: number;
+  ceiling: number;
+  mne: number;
+  flooring: number;
+  brickwork: number;
+  carpenter: number;
+  painter: number;
+  others: { label: string; count: number }[];
+};
+
+
 type ImageItem = {
   image_url: string;
   caption?: string | null;
@@ -17,13 +47,20 @@ type Props = {
   reportDate: string;
   summary: string | null;
   images: ImageItem[];
+  weather: WeatherItem[];
+  materials: MaterialItem[];
+  equipment: EquipmentItem[];
+  workers: Workers;
 };
-
 export default function ReportPDF({
   projectName,
   reportDate,
   summary,
   images,
+  weather,
+  materials,
+  equipment,
+  workers,
 }: Props) {
   const imagePages = chunk(images, 6);
 
@@ -31,20 +68,79 @@ export default function ReportPDF({
     <Document>
 
       {/* ================= PAGE 1 : SUMMARY ================= */}
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.project}>{projectName}</Text>
-        <Text style={styles.subtitle}>Daily Maintenance Report</Text>
-        <Text style={styles.date}>Date: {reportDate}</Text>
+<Page size="A4" style={styles.page}>
+  <Text style={styles.project}>{projectName}</Text>
+  <Text style={styles.subtitle}>Daily Maintenance Report</Text>
+  <Text style={styles.date}>Date: {reportDate}</Text>
 
-        <Text style={styles.section}>Summary</Text>
-        <Text style={styles.summary}>
-          {summary || "No summary provided."}
-        </Text>
+  {/* SUMMARY */}
+  <Text style={styles.section}>Summary</Text>
+  <Text style={styles.paragraph}>
+    {summary || "No summary provided."}
+  </Text>
 
-        <Text style={styles.footer}>
-          Generated automatically by Site Maintenance System
+  {/* WEATHER */}
+  <Text style={styles.section}>Weather</Text>
+  {weather.length === 0 ? (
+    <Text style={styles.muted}>No weather recorded</Text>
+  ) : (
+    weather.map((w, i) => (
+      <Text key={i} style={styles.listItem}>
+        {w.from} – {w.to} : {w.condition}
+      </Text>
+    ))
+  )}
+
+  {/* MATERIALS */}
+  <Text style={styles.section}>Materials Delivered</Text>
+  {materials.length === 0 ? (
+    <Text style={styles.muted}>No materials delivered</Text>
+  ) : (
+    materials.map((m, i) => (
+      <Text key={i} style={styles.listItem}>
+        • {m.name} ({m.qty})
+      </Text>
+    ))
+  )}
+
+  {/* EQUIPMENT */}
+  <Text style={styles.section}>Machinery / Equipment</Text>
+  {equipment.length === 0 ? (
+    <Text style={styles.muted}>No equipment recorded</Text>
+  ) : (
+    equipment.map((e, i) => (
+      <Text key={i} style={styles.listItem}>
+        • {e.name} – {e.qty} 
+      </Text>
+    ))
+  )}
+
+  {/* WORKERS */}
+  <Text style={styles.section}>Workers</Text>
+  <Text style={styles.listItem}>Partition: {workers.partition}</Text>
+  <Text style={styles.listItem}>Ceiling: {workers.ceiling}</Text>
+  <Text style={styles.listItem}>M&E: {workers.mne}</Text>
+  <Text style={styles.listItem}>Flooring: {workers.flooring}</Text>
+  <Text style={styles.listItem}>Brickwork: {workers.brickwork}</Text>
+  <Text style={styles.listItem}>Carpenter: {workers.carpenter}</Text>
+  <Text style={styles.listItem}>Painter: {workers.painter}</Text>
+
+  {workers.others.length > 0 && (
+    <>
+      <Text style={styles.subSection}>Others</Text>
+      {workers.others.map((o, i) => (
+        <Text key={i} style={styles.listItem}>
+          • {o.label}: {o.count}
         </Text>
-      </Page>
+      ))}
+    </>
+  )}
+
+  <Text style={styles.footer}>
+    Generated automatically by Site Maintenance System
+  </Text>
+</Page>
+
 
       {/* ================= IMAGE PAGES ================= */}
       {imagePages.map((group, pageIndex) => (
@@ -162,4 +258,26 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: "#777",
   },
+
+  paragraph: {
+  marginBottom: 12,
+  lineHeight: 1.6,
+},
+
+listItem: {
+  fontSize: 10,
+  marginBottom: 4,
+},
+
+muted: {
+  fontSize: 10,
+  color: "#666",
+  marginBottom: 6,
+},
+
+subSection: {
+  marginTop: 6,
+  fontSize: 12,
+  fontWeight: "bold",
+},
 });
