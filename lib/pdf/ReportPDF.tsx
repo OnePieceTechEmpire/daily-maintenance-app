@@ -5,7 +5,10 @@ import {
   View,
   Image,
   StyleSheet,
+  Font,
 } from "@react-pdf/renderer";
+
+Font.registerHyphenationCallback(word => [word]);
 
 type WeatherItem = {
   from: string;
@@ -44,6 +47,7 @@ type ImageItem = {
 
 type Props = {
   projectName: string;
+  projectDescription?: string | null;
   reportDate: string;
   summary: string | null;
   images: ImageItem[];
@@ -54,6 +58,7 @@ type Props = {
 };
 export default function ReportPDF({
   projectName,
+   projectDescription,
   reportDate,
   summary,
   images,
@@ -69,16 +74,21 @@ export default function ReportPDF({
 
       {/* ================= PAGE 1 : SUMMARY ================= */}
 <Page size="A4" style={styles.page}>
-  <Text style={styles.project}>{projectName}</Text>
-  <Text style={styles.subtitle}>Daily Maintenance Report</Text>
-  <Text style={styles.date}>Date: {reportDate}</Text>
 
-  {/* SUMMARY */}
-  <Text style={styles.section}>Summary</Text>
-  <Text style={styles.paragraph}>
-    {summary || "No summary provided."}
+<View style={styles.sectionBlock}>
+  {projectDescription && (
+  <Text style={styles.project}>
+   PROJECT: {projectDescription}
   </Text>
+)}
+</View>
 
+  <Text style={styles.subtitle}>Site Diary Record</Text>
+  <Text style={styles.date}>
+  Date: {formatDate(reportDate)}
+</Text>
+
+<View style={styles.sectionBlock}>
   {/* WEATHER */}
   <Text style={styles.section}>Weather</Text>
   {weather.length === 0 ? (
@@ -90,54 +100,92 @@ export default function ReportPDF({
       </Text>
     ))
   )}
+  </View>
 
   {/* MATERIALS */}
-  <Text style={styles.section}>Materials Delivered</Text>
-  {materials.length === 0 ? (
-    <Text style={styles.muted}>No materials delivered</Text>
-  ) : (
-    materials.map((m, i) => (
+  <View style={styles.sectionBlock}>
+{materials.length > 0 && (
+  <>
+    <Text style={styles.section}>Materials Delivered</Text>
+    {materials.map((m, i) => (
       <Text key={i} style={styles.listItem}>
         • {m.name} ({m.qty})
       </Text>
-    ))
-  )}
+    ))}
+  </>
+)}
+</View>
 
   {/* EQUIPMENT */}
-  <Text style={styles.section}>Machinery / Equipment</Text>
-  {equipment.length === 0 ? (
-    <Text style={styles.muted}>No equipment recorded</Text>
-  ) : (
-    equipment.map((e, i) => (
+    <View style={styles.sectionBlock}>
+{equipment.length > 0 && (
+  <>
+    <Text style={styles.section}>Machinery / Equipment</Text>
+    {equipment.map((e, i) => (
       <Text key={i} style={styles.listItem}>
-        • {e.name} – {e.qty} 
+        • {e.name} – {e.qty} – {e.status}
       </Text>
-    ))
-  )}
+    ))}
+  </>
+)}
+</View>
 
   {/* WORKERS */}
-  <Text style={styles.section}>Workers</Text>
-  <Text style={styles.listItem}>Partition: {workers.partition}</Text>
-  <Text style={styles.listItem}>Ceiling: {workers.ceiling}</Text>
-  <Text style={styles.listItem}>M&E: {workers.mne}</Text>
-  <Text style={styles.listItem}>Flooring: {workers.flooring}</Text>
-  <Text style={styles.listItem}>Brickwork: {workers.brickwork}</Text>
-  <Text style={styles.listItem}>Carpenter: {workers.carpenter}</Text>
-  <Text style={styles.listItem}>Painter: {workers.painter}</Text>
+      <View style={styles.sectionBlock}>
+<Text style={styles.section}>Workers</Text>
 
-  {workers.others.length > 0 && (
-    <>
-      <Text style={styles.subSection}>Others</Text>
-      {workers.others.map((o, i) => (
-        <Text key={i} style={styles.listItem}>
-          • {o.label}: {o.count}
-        </Text>
-      ))}
-    </>
-  )}
+{(
+  [
+    ["Partition", workers.partition],
+    ["Ceiling", workers.ceiling],
+    ["M&E", workers.mne],
+    ["Flooring", workers.flooring],
+    ["Brickwork", workers.brickwork],
+    ["Carpenter", workers.carpenter],
+    ["Painter", workers.painter],
+  ] as [string, number][]
+)
+  .filter(([, count]) => count > 0)
+  .map(([label, count], i) => (
+    <Text key={i} style={styles.listItem}>
+      • {label}: {count}
+    </Text>
+  ))}
+
+{/* OTHERS */}
+{workers.others
+  .filter((o) => o.count > 0 && o.label.trim() !== "")
+  .map((o, i) => (
+    <Text key={`other-${i}`} style={styles.listItem}>
+      • {o.label}: {o.count}
+    </Text>
+  ))}
+
+{/* IF EMPTY*/}
+{[
+  workers.partition,
+  workers.ceiling,
+  workers.mne,
+  workers.flooring,
+  workers.brickwork,
+  workers.carpenter,
+  workers.painter,
+  ...workers.others.map((o) => o.count),
+].every((c) => c === 0) && (
+  <Text style={styles.muted}>No workers recorded</Text>
+)}
+</View>
+
+      <View style={styles.sectionBlock}>
+  {/* SUMMARY */}
+  <Text style={styles.section}>Summary</Text>
+  <Text style={styles.paragraph}>
+    {summary || "No summary provided."}
+  </Text>
+  </View>
 
   <Text style={styles.footer}>
-    Generated automatically by Site Maintenance System
+    Generated automatically by Site Diary Record System
   </Text>
 </Page>
 
@@ -172,6 +220,17 @@ export default function ReportPDF({
   );
 }
 
+
+function formatDate(dateString: string) {
+  const date = new Date(dateString);
+
+  return date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 /* ---------------- UTIL ---------------- */
 
 function chunk<T>(arr: T[], size: number): T[][] {
@@ -192,8 +251,9 @@ const styles = StyleSheet.create({
   },
 
   project: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "bold",
+    wordBreak: "break-word",
   },
 
   subtitle: {
@@ -214,7 +274,7 @@ const styles = StyleSheet.create({
   },
 
   summary: {
-    lineHeight: 1.6,
+    lineHeight: 1.35,
     marginBottom: 12,
   },
 
@@ -261,7 +321,7 @@ const styles = StyleSheet.create({
 
   paragraph: {
   marginBottom: 12,
-  lineHeight: 1.6,
+  lineHeight: 1.2,
 },
 
 listItem: {
@@ -279,5 +339,15 @@ subSection: {
   marginTop: 6,
   fontSize: 12,
   fontWeight: "bold",
+},
+
+projectDescription: {
+  fontSize: 10,
+  color: "#555",
+  marginBottom: 8,
+},
+
+sectionBlock: {
+  marginBottom: 14,
 },
 });

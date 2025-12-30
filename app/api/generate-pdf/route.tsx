@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     // Fetch report
     const { data: report } = await supabase
       .from("daily_reports")
-      .select("*, projects(name)")
+      .select("*, projects(name, description)")
       .eq("id", reportId)
       .single();
 
@@ -41,6 +41,7 @@ export async function POST(req: Request) {
 const pdfBuffer = await renderToBuffer(
   <ReportPDF
     projectName={report.projects.name}
+    projectDescription={report.projects.description}
     reportDate={report.report_date}
     summary={report.summary}
     images={images || []}
