@@ -18,7 +18,7 @@ type DailyReport = {
   status: string;
   created_at: string;
   updated_at: string;
-    pdf_url: string | null;   // ✅ ADD THIS
+    pdf_url: string | null;   
 };
 
 
@@ -85,6 +85,12 @@ type DailyReport = {
       router.push(`/projects/${projectId}/reports/${todayReport.id}`);
     }
   }
+
+  function getPdfHref(pdfUrl: string, updatedAt?: string | null) {
+  const v = updatedAt ? encodeURIComponent(updatedAt) : Date.now();
+  return `${pdfUrl}?v=${v}`;
+}
+
 
 return (
   <div className="min-h-screen bg-gray-100">
@@ -222,7 +228,8 @@ return (
 {todayReport?.status === "completed" && todayReport?.pdf_url && (
   <div className="flex justify-center mt-3">
     <a
-      href={todayReport.pdf_url}
+      href={getPdfHref(todayReport.pdf_url, todayReport.updated_at)}
+
       target="_blank"
       className="flex items-center gap-2 text-red-600 hover:text-red-800 text-sm font-semibold transition active:scale-95"
     >
@@ -243,6 +250,7 @@ return (
       </svg>
       Download PDF
     </a>
+    
   </div>
 )}
 
@@ -297,7 +305,8 @@ return (
   {/* PDF */}
   {r.pdf_url ? (
     <a
-      href={r.pdf_url}
+      href={getPdfHref(r.pdf_url, r.updated_at)}
+
       target="_blank"
       className="flex flex-col items-center text-gray-600 hover:text-gray-800 transition active:scale-95"
     >

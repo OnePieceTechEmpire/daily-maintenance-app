@@ -14,6 +14,7 @@ type WorkersState = {
   brickwork: number;
   carpenter: number;
   painter: number;
+  plumber: number;
   others: { label: string; count: number }[];
 };
 
@@ -23,6 +24,12 @@ export default function EditReportPage() {
 
   const projectId = params.projectId as string;
   const reportId = params.reportId as string;
+
+
+  const [reportStatus, setReportStatus] = useState<"draft" | "completed">("draft");
+  const [regenerating, setRegenerating] = useState(false);
+  const [rotating, setRotating] = useState<Record<string, boolean>>({});
+
 
   const [images, setImages] = useState<any[]>([]);
   const [summary, setSummary] = useState("");
@@ -44,6 +51,7 @@ const [equipment, setEquipment] = useState<
     brickwork: 0,
     carpenter: 0,
     painter: 0,
+    plumber: 0,
     others: [] as { label: string; count: number }[],
   });
 
@@ -62,6 +70,7 @@ async function loadReport() {
     .select(`
       summary,
       report_date,
+          status,
       weather,
       workers,
       materials,
@@ -74,6 +83,8 @@ async function loadReport() {
     console.error(error);
     return;
   }
+
+  setReportStatus((data.status as any) || "draft");
 
   setSummary(data.summary || "");
   setReportDate(data.report_date);
@@ -90,6 +101,7 @@ async function loadReport() {
         brickwork: data.workers.brickwork ?? 0,
         carpenter: data.workers.carpenter ?? 0,
         painter: data.workers.painter ?? 0,
+        plumber: data.workers.plumber?? 0,
         others: Array.isArray(data.workers.others)
           ? data.workers.others
           : [],
@@ -102,6 +114,7 @@ async function loadReport() {
         brickwork: 0,
         carpenter: 0,
         painter: 0,
+        plumber: 0,
         others: [],
       }
 );
@@ -196,6 +209,123 @@ async function handleSingleUpload(originalFile: File) {
 }
 
 
+async function rotateImageUrlToJpegBlob(
+  imageUrl: string,
+  direction: "left" | "right"
+) {
+  const res = await fetch(imageUrl);
+  const blob = await res.blob();
+
+  const dataUrl: string = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+
+  const img = new Image();
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas not supported");
+
+  // 90-degree rotation swaps dimensions
+  canvas.width = img.height;
+  canvas.height = img.width;
+
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.rotate(((direction === "right" ? 90 : -90) * Math.PI) / 180);
+  ctx.drawImage(img, -img.width / 2, -img.height / 2);
+
+  const outBlob: Blob = await new Promise((resolve) =>
+    canvas.toBlob((b) => resolve(b as Blob), "image/jpeg", 0.9)
+  );
+
+  return outBlob;
+}
+
+function getStoragePathFromPublicUrl(url: string) {
+  const prefix = "public/report-images/";
+  const index = url.indexOf(prefix);
+  if (index === -1) return null;
+  return url.substring(index + prefix.length);
+}
+
+
+async function rotateAndReplaceImage(img: any, direction: "left" | "right") {
+  if (!reportId) return;
+
+  setRotating((p) => ({ ...p, [img.id]: true }));
+
+  try {
+    // 1) rotate existing image into new jpeg blob
+    const rotatedBlob = await rotateImageUrlToJpegBlob(img.image_url, direction);
+
+    // 2) upload rotated file
+    const newPath = `${reportId}/${Date.now()}-rotated.jpg`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("report-images")
+      .upload(newPath, rotatedBlob, {
+        contentType: "image/jpeg",
+        upsert: true,
+        cacheControl: "0",
+      });
+
+    if (uploadError) {
+      console.error(uploadError);
+      alert("Rotate upload failed");
+      return;
+    }
+
+    const newUrl = `https://wnvkfycjjuxjezxggcpg.supabase.co/storage/v1/object/public/report-images/${newPath}`;
+
+    // 3) update DB row
+    const { error: dbError } = await supabase
+      .from("report_images")
+      .update({ image_url: newUrl })
+      .eq("id", img.id);
+
+    if (dbError) {
+      console.error(dbError);
+      alert("Failed to update image URL in database");
+      return;
+    }
+
+    // 4) update UI immediately
+    setImages((prev) =>
+      prev.map((x) => (x.id === img.id ? { ...x, image_url: newUrl } : x))
+    );
+
+    // 5) delete old file from storage (optional but good)
+    const oldPath = getStoragePathFromPublicUrl(img.image_url);
+    if (oldPath) {
+      const { error: removeError } = await supabase.storage
+        .from("report-images")
+        .remove([oldPath]);
+
+      if (removeError) {
+        // not fatal, just log
+        console.warn("Old image delete failed:", removeError);
+      }
+    }
+  } catch (e) {
+    console.error(e);
+    alert("Rotate failed");
+  } finally {
+    setRotating((p) => ({ ...p, [img.id]: false }));
+  }
+}
+
+
+
+
+
 
   // -----------------------------------------------
   // Update caption
@@ -210,6 +340,66 @@ async function handleSingleUpload(originalFile: File) {
       prev.map((img) => (img.id === id ? { ...img, caption } : img))
     );
   }
+
+  async function cleanSummaryAndCaptions() {
+  // if summary empty AND no captions -> do nothing
+  const hasSummary = summary.trim().length > 0;
+  const captionIds = Object.keys(captionDrafts);
+  const nonEmptyCaptionIds = captionIds.filter(
+    (id) => (captionDrafts[id] || "").trim().length > 0
+  );
+
+  if (!hasSummary && nonEmptyCaptionIds.length === 0) {
+    return alert("Nothing to clean yet.");
+  }
+
+  setCleaning(true);
+
+  try {
+    // 1) Clean summary (if exists)
+    if (hasSummary) {
+      const res = await fetch("/api/clean-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "summary", text: summary }),
+      });
+
+      const data = await res.json();
+      const cleanedSummary = data.cleaned || summary;
+
+      setSummary(cleanedSummary);
+      await saveSummary(cleanedSummary);
+    }
+
+    // 2) Clean captions (only non-empty)
+    for (const imageId of nonEmptyCaptionIds) {
+      const original = captionDrafts[imageId];
+
+      const res = await fetch("/api/clean-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "caption", text: original }),
+      });
+
+      const data = await res.json();
+      const cleanedCaption = data.cleaned || original;
+
+      // update UI
+      setCaptionDrafts((prev) => ({
+        ...prev,
+        [imageId]: cleanedCaption,
+      }));
+
+      // save to DB (use your existing function)
+      await updateCaption(imageId, cleanedCaption);
+    }
+
+    alert("Summary + captions cleaned ✅");
+  } finally {
+    setCleaning(false);
+  }
+}
+
 
   // -----------------------------------------------
   // Save Summary
@@ -230,17 +420,15 @@ async function handleSingleUpload(originalFile: File) {
   async function autosaveExtraFields(updated?: Partial<any>) {
   if (!reportId) return;
 
-  await supabase
-    .from("daily_reports")
-    .update({
-      workers,
-      weather,
-      materials,
-      equipment,
-      status: "draft",
-      ...updated, // optional override
-    })
-    .eq("id", reportId);
+await supabase.from("daily_reports").update({
+  workers,
+  weather,
+  materials,
+  equipment,
+  ...(reportStatus === "draft" ? { status: "draft" } : {}), // only force draft if draft
+  ...updated,
+}).eq("id", reportId);
+
 }
 
   async function saveCaption(imageId: string) {
@@ -331,27 +519,77 @@ async function cleanSummary() {
 
   setCleaning(false);
 }
+
+async function regeneratePdf() {
+  setRegenerating(true);
+
+  // make sure latest summary is saved before generating
+  await supabase.from("daily_reports").update({
+    summary,
+    workers,
+    weather,
+    materials,
+    equipment,
+          status: "completed", // lock status just in case
+  }).eq("id", reportId);
+
+  const res = await fetch("/api/generate-pdf", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reportId }),
+  });
+
+  if (!res.ok) {
+    setRegenerating(false);
+    return alert("Failed to regenerate PDF");
+  }
+
+  const data = await res.json();
+
+  // OPTIONAL: refresh local status/anything
+  // You can also update reportStatus to completed to be safe
+  setReportStatus("completed");
+
+  
+  setRegenerating(false);
+  alert("PDF regenerated ");
+    // 4️⃣ Go back to View page
+  router.push(`/projects/${projectId}/reports/${reportId}`);
+}
+
   // -----------------------------------------------
   // Submit Report
   // -----------------------------------------------
-  async function submitReport() {
-    setLoading(true);
+async function submitReport() {
+  setLoading(true);
 
-    await supabase
-      .from("daily_reports")
-      .update({ status: "completed" })
-      .eq("id", reportId);
+  // ensure everything is saved before completing
+  await supabase.from("daily_reports").update({
+    summary,
+    workers,
+    weather,
+    materials,
+    equipment,
+    status: "completed",
+  }).eq("id", reportId);
 
-      // 🔥 Generate PDF
-// 2️⃣ Trigger PDF generation
-await fetch("/api/generate-pdf", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ reportId }),
-});
+  const res = await fetch("/api/generate-pdf", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reportId }),
+  });
 
+  if (!res.ok) {
+    setLoading(false);
+    alert("Report completed, but PDF generation failed. You can regenerate PDF later.");
     router.push(`/projects/${projectId}/dashboard`);
+    return;
   }
+
+  setLoading(false);
+  router.push(`/projects/${projectId}/dashboard`);
+}
+
 
   // -----------------------------------------------
   // UI
@@ -419,6 +657,7 @@ return (
               key={img.id}
               className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden relative"
             >
+              
               {/* DELETE BUTTON */}
               <button
                 className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded shadow active:scale-90"
@@ -427,10 +666,35 @@ return (
                 X
               </button>
 
+              
+
               <img
                 src={img.image_url}
                 className="w-full h-32 object-cover"
               />
+
+              <div className="px-3 pb-3 bg-gray-50">
+  <div className="flex gap-2">
+    <button
+      type="button"
+      disabled={!!rotating[img.id]}
+      onClick={() => rotateAndReplaceImage(img, "left")}
+      className="flex-1 bg-gray-200 hover:bg-gray-300 text-xs py-2 rounded-lg disabled:opacity-60"
+    >
+      {rotating[img.id] ? "Rotating..." : "Rotate ⟲"}
+    </button>
+
+    <button
+      type="button"
+      disabled={!!rotating[img.id]}
+      onClick={() => rotateAndReplaceImage(img, "right")}
+      className="flex-1 bg-gray-200 hover:bg-gray-300 text-xs py-2 rounded-lg disabled:opacity-60"
+    >
+      {rotating[img.id] ? "Rotating..." : "Rotate ⟳"}
+    </button>
+  </div>
+</div>
+
 
               {/* CAPTION INPUT */}
               <div className="p-3 border-t bg-gray-50">
@@ -474,7 +738,7 @@ return (
         <div className="mt-4 flex items-center gap-3">
 <div className="mt-4">
   <button
-    onClick={cleanSummary}
+    onClick={cleanSummaryAndCaptions}
     disabled={cleaning}
     className="
       w-full
@@ -522,6 +786,7 @@ return (
       ["brickwork", "Brick Work"],
       ["carpenter", "Carpenter"],
       ["painter", "Painter"],
+      ["plumber", "Plumber"],
     ].map(([key, label]) => (
       <div key={key} className="flex justify-between items-center">
         <span className="text-sm text-gray-700">{label}</span>
@@ -901,6 +1166,7 @@ return (
 
 
       {/* SUBMIT BUTTON */}
+      {reportStatus === "draft" && (
       <div>
         <button
           onClick={submitReport}
@@ -913,6 +1179,22 @@ return (
           {loading ? "Submitting.." : "Submit Report"}
         </button>
       </div>
+      )}
+
+      {reportStatus === "completed" && (
+  <button
+    onClick={regeneratePdf}
+    disabled={regenerating}
+    className="
+      w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl 
+      text-lg font-semibold shadow active:scale-95 transition
+      disabled:opacity-60 disabled:cursor-not-allowed
+    "
+  >
+    {regenerating ? "Regenerating PDF..." : "Regenerate PDF"}
+  </button>
+)}
+
     </div>
   </div>
 );

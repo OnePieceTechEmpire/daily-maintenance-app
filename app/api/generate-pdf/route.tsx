@@ -63,10 +63,13 @@ const pdfBuffer = await renderToBuffer(
 
     const pdfUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/report-pdf/${filePath}`;
 
-    await supabase
-      .from("daily_reports")
-      .update({ pdf_url: pdfUrl })
-      .eq("id", reportId);
+const now = new Date().toISOString();
+
+await supabase
+  .from("daily_reports")
+  .update({ pdf_url: pdfUrl, updated_at: now })
+  .eq("id", reportId);
+
 
     return NextResponse.json({ success: true, pdfUrl });
   } catch (err) {

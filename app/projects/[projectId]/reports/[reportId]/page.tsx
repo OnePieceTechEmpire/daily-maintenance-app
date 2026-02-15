@@ -11,6 +11,8 @@ export default function ViewReportPage() {
   const projectId = params.projectId as string;
   const reportId = params.reportId as string;
 
+  const [regenerating, setRegenerating] = useState(false);
+
   const [report, setReport] = useState<any>(null);
   const [images, setImages] = useState<any[]>([]);
       const [weather, setWeather] = useState<any[]>([]);
@@ -26,6 +28,7 @@ export default function ViewReportPage() {
       brickwork: 0,
       carpenter: 0,
       painter: 0,
+      plumber: 0,
       others: [] as { label: string; count: number }[],
     });
   
@@ -58,6 +61,7 @@ setEquipment(data.equipment || []);
         brickwork: data.workers.brickwork ?? 0,
         carpenter: data.workers.carpenter ?? 0,
         painter: data.workers.painter ?? 0,
+        plumber: data.workers.plumber ?? 0,
         others: Array.isArray(data.workers.others)
           ? data.workers.others
           : [],
@@ -70,6 +74,7 @@ setEquipment(data.equipment || []);
         brickwork: 0,
         carpenter: 0,
         painter: 0,
+        plumber: 0,
         others: [],
       }
 );
@@ -84,6 +89,29 @@ setEquipment(data.equipment || []);
 
     setImages(data || []);
   }
+
+  async function regeneratePdf() {
+  setRegenerating(true);
+
+  const res = await fetch("/api/generate-pdf", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reportId }),
+  });
+
+  if (!res.ok) {
+    setRegenerating(false);
+    alert("Failed to regenerate PDF");
+    return;
+  }
+
+  // refresh report to get latest pdf_url
+  await loadReport();
+
+  setRegenerating(false);
+  alert("PDF regenerated ✅");
+}
+
 
   if (!report) {
     return <div className="p-6">Loading...</div>;
@@ -125,6 +153,33 @@ return (
         </svg>
       </button>
 
+      <div className="flex items-center gap-2">
+
+  {/* EDIT */}
+  <button
+    onClick={() => router.push(`/projects/${projectId}/reports/${reportId}/edit`)}
+    className="bg-white/20 hover:bg-white/30 text-white font-semibold py-2 px-3 rounded-xl transition active:scale-95"
+  >
+    Edit
+  </button>
+
+
+
+  {/* PDF DOWNLOAD */}
+  {report.pdf_url && (
+    <a
+      href={`${report.pdf_url}?v=${encodeURIComponent(report.updated_at || Date.now())}`}
+
+      target="_blank"
+      className="flex items-center gap-2 bg-white text-blue-700 font-semibold py-2 px-4 rounded-xl shadow hover:bg-gray-100 active:scale-95 transition"
+    >
+      PDF
+    </a>
+  )}
+
+</div>
+
+
       <div>
         <h1 className="text-2xl font-bold">Daily Report</h1>
         <p className="text-white text-sm mt-1 opacity-90">
@@ -135,14 +190,14 @@ return (
     </div>
     </div>
 
-        {/* PDF DOWNLOAD BUTTON */}
+        {/* PDF DOWNLOAD BUTTON 
         {report.pdf_url && (
           <a
             href={report.pdf_url}
             target="_blank"
             className="flex items-center gap-2 bg-white text-blue-700 font-semibold py-2 px-4 rounded-xl shadow hover:bg-gray-100 active:scale-95 transition"
           >
-            {/* PDF Icon */}
+            {/* PDF Icon 
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -159,7 +214,7 @@ return (
             </svg>
             PDF
           </a>
-        )}
+        )}*/}
 
       </div>
     </div>
@@ -264,6 +319,7 @@ return (
     <li>Brickwork: {workers.brickwork}</li>
     <li>Carpenter: {workers.carpenter}</li>
     <li>Painter: {workers.painter}</li>
+    <li>Plumber: {workers.plumber}</li>
   </ul>
 
   {workers.others.length > 0 && (

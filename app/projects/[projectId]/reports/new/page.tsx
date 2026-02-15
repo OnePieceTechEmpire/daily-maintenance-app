@@ -35,6 +35,7 @@ const [workers, setWorkers] = useState({
   brickwork: 0,
   carpenter: 0,
   painter: 0,
+  plumber: 0,
   others: [] as { label: string; count: number }[],
 });
 
@@ -109,6 +110,66 @@ async function cleanSummary() {
 
   setCleaning(false);
 }
+
+async function cleanSummaryAndCaptions() {
+  // if summary empty AND no captions -> do nothing
+  const hasSummary = summary.trim().length > 0;
+  const captionIds = Object.keys(captionDrafts);
+  const nonEmptyCaptionIds = captionIds.filter(
+    (id) => (captionDrafts[id] || "").trim().length > 0
+  );
+
+  if (!hasSummary && nonEmptyCaptionIds.length === 0) {
+    return alert("Nothing to clean yet.");
+  }
+
+  setCleaning(true);
+
+  try {
+    // 1) Clean summary (if exists)
+    if (hasSummary) {
+      const res = await fetch("/api/clean-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "summary", text: summary }),
+      });
+
+      const data = await res.json();
+      const cleanedSummary = data.cleaned || summary;
+
+      setSummary(cleanedSummary);
+      await saveSummary(cleanedSummary);
+    }
+
+    // 2) Clean captions (only non-empty)
+    for (const imageId of nonEmptyCaptionIds) {
+      const original = captionDrafts[imageId];
+
+      const res = await fetch("/api/clean-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "caption", text: original }),
+      });
+
+      const data = await res.json();
+      const cleanedCaption = data.cleaned || original;
+
+      // update UI
+      setCaptionDrafts((prev) => ({
+        ...prev,
+        [imageId]: cleanedCaption,
+      }));
+
+      // save to DB (use your existing function)
+      await updateCaption(imageId, cleanedCaption);
+    }
+
+    alert("Summary + captions cleaned ✅");
+  } finally {
+    setCleaning(false);
+  }
+}
+
 
 
 
@@ -480,7 +541,7 @@ return (
   <div className="mt-4 flex items-center gap-3">
 <div className="mt-4">
   <button
-    onClick={cleanSummary}
+    onClick={cleanSummaryAndCaptions}
     disabled={cleaning}
     className="
       w-full
@@ -533,6 +594,7 @@ return (
       ["brickwork", "Brick Work"],
       ["carpenter", "Carpenter"],
       ["painter", "Painter"],
+      ["plumber", "Plumber"],
     ].map(([key, label]) => (
       <div key={key} className="flex justify-between items-center">
         <span className="text-sm text-gray-700">{label}</span>
