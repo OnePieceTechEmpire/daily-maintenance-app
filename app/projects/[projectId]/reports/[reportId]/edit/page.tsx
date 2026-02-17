@@ -554,7 +554,7 @@ async function regeneratePdf() {
   setRegenerating(false);
   alert("PDF regenerated ");
     // 4️⃣ Go back to View page
-  router.push(`/projects/${projectId}/reports/${reportId}`);
+  router.push(`/projects/${projectId}/dashboard`);
 }
 
   // -----------------------------------------------
@@ -607,10 +607,36 @@ return (
   <div className="p-6 rounded-b-3xl">
 
 
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold">Edit Report</h1>
-        <p className="text-white text-sm mt-1 opacity-90">{reportDate}</p>
-      </div>
+<div className="flex items-center gap-4">
+  <button
+    onClick={() => router.back()}
+    className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition active:scale-95"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth="2"
+      stroke="currentColor"
+      className="w-6 h-6"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15.75 19.5L8.25 12l7.5-7.5"
+      />
+    </svg>
+  </button>
+
+  {/* Title + Date */}
+  <div className="flex flex-col">
+    <h1 className="text-3xl font-bold">Edit Report</h1>
+    <p className="text-white/80 text-sm mt-1">
+      {reportDate}
+    </p>
+  </div>
+</div>
+
     </div>
 </div>
     {/* CONTENT */}
