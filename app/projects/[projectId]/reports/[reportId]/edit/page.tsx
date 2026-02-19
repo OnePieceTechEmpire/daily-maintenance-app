@@ -5,6 +5,14 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import imageCompression from "browser-image-compression";
 import { SparklesIcon } from '@heroicons/react/24/solid'; // or outline if you prefer
+import { CameraIcon, PhotoIcon } from "@heroicons/react/24/solid";
+import {
+  TrashIcon,
+  ArrowUturnLeftIcon,
+  ArrowUturnRightIcon,
+} from "@heroicons/react/24/solid";
+
+
 
 type WorkersState = {
   partition: number;
@@ -145,17 +153,16 @@ async function loadReport() {
 async function uploadImages(e: any) {
   if (!reportId) return;
 
-  const files = Array.from(e.target.files) as File[];
+  const files = Array.from(e.target.files || []) as File[];
+  e.target.value = ""; // ✅ important for Android
+
   if (files.length === 0) return;
 
   setUploading(true);
-
-  for (const file of files) {
-    await handleSingleUpload(file);
-  }
-
+  for (const file of files) await handleSingleUpload(file);
   setUploading(false);
 }
+
   
 
   // -----------------------------------------------
@@ -643,106 +650,220 @@ return (
     <div className="max-w-4xl mx-auto p-5 space-y-6">
 
       {/* UPLOAD IMAGE */}
-      <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
-        <label className="block font-semibold text-gray-700 mb-2">
-          Upload Images
-        </label>
+{/* UPLOAD IMAGES (Mobile-friendly) */}
+<div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
+  <div className="flex items-start justify-between gap-3">
+    <div>
+      <label className="block font-semibold text-gray-800">
+        Upload Photos
+      </label>
+      <p className="text-xs text-gray-500 mt-1">
+        Use Camera for new photos, or Gallery to select existing images.
+      </p>
+    </div>
 
-        <label
-          className="
-            flex flex-col items-center justify-center p-6 
-            border-2 border-dashed border-gray-300 rounded-xl
-            cursor-pointer bg-gray-50 hover:bg-gray-100 transition
-          "
-        >
-          <span className="text-gray-600 text-sm">Tap to upload images</span>
+    {/* Small status pill */}
+    {uploading ? (
+      <span className="shrink-0 inline-flex items-center gap-2 text-xs font-semibold px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+        <span className="w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        Uploading
+      </span>
+    ) : (
+      <span className="shrink-0 text-[11px] font-semibold px-3 py-1 rounded-full bg-gray-50 text-gray-600 border border-gray-200">
+        Ready
+      </span>
+    )}
+  </div>
 
-          {/* Hidden input */}
-          <input
-            type="file"
-            multiple
-            className="hidden"
-            onChange={uploadImages}
-          />
-        </label>
+  <div className="mt-4 grid grid-cols-2 gap-3">
+    {/* CAMERA */}
+    <label
+      className="
+        group relative overflow-hidden cursor-pointer
+        rounded-2xl p-4 border border-blue-200
+        bg-gradient-to-br from-blue-600 to-indigo-600
+        text-white shadow-sm active:scale-[0.98] transition
+      "
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-11 h-11 rounded-2xl bg-white/15 flex items-center justify-center">
+          <CameraIcon className="w-6 h-6" />
+        </div>
 
-        {/* Upload indicator */}
-        {uploading && (
-          <div className="flex items-center gap-2 text-gray-600 text-sm mt-2">
-            <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-            Uploading images...
+        <div className="flex-1">
+          <div className="text-sm font-bold leading-tight">Camera</div>
+          <div className="text-[11px] opacity-90 mt-0.5">
+            Take a new photo
           </div>
-        )}
+        </div>
       </div>
 
-      {/* IMAGE GRID */}
-      {images.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {images.map((img) => (
-            <div
-              key={img.id}
-              className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden relative"
+      {/* subtle shine */}
+      <div className="pointer-events-none absolute -top-10 -right-10 w-24 h-24 bg-white/15 rounded-full blur-2xl group-hover:bg-white/20 transition" />
+
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={uploadImages}
+        className="hidden"
+      />
+    </label>
+
+    {/* GALLERY */}
+    <label
+      className="
+        group cursor-pointer rounded-2xl p-4
+        border border-gray-200 bg-gray-50
+        hover:bg-gray-100 shadow-sm
+        active:scale-[0.98] transition
+      "
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-11 h-11 rounded-2xl bg-white border border-gray-200 flex items-center justify-center">
+          <PhotoIcon className="w-6 h-6 text-gray-700" />
+        </div>
+
+        <div className="flex-1">
+          <div className="text-sm font-bold text-gray-800 leading-tight">
+            Gallery
+          </div>
+          <div className="text-[11px] text-gray-500 mt-0.5">
+            Choose multiple
+          </div>
+        </div>
+      </div>
+
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={uploadImages}
+        className="hidden"
+      />
+    </label>
+  </div>
+
+  {/* Optional hint line */}
+  <p className="mt-3 text-[11px] text-gray-500">
+    Tip: If camera doesn’t appear, allow camera permission in your phone settings.
+  </p>
+</div>
+
+
+
+   {/* IMAGE GRID (2-cols mobile, full portrait visible) */}
+{images.length > 0 && (
+  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+    {images.map((img) => {
+      const isRotating = !!rotating?.[img.id];
+
+      return (
+        <div
+          key={img.id}
+          className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden"
+        >
+          {/* IMAGE BOX */}
+          <div className="relative bg-gray-100">
+            {/* Taller than before, still compact */}
+            <img
+              src={img.image_url}
+              alt="Report"
+              className="
+                w-full h-44 sm:h-48 md:h-40
+                object-contain
+              "
+            />
+
+            {/* TOP-RIGHT: Delete */}
+            <button
+              type="button"
+              onClick={() => deleteImage(img)}
+              className="
+                absolute top-2 right-2
+                w-9 h-9 rounded-xl
+                bg-red-600 text-white shadow
+                flex items-center justify-center
+                hover:bg-red-700 active:scale-95 transition
+              "
+              aria-label="Delete image"
             >
-              
-              {/* DELETE BUTTON */}
-              <button
-                className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded shadow active:scale-90"
-                onClick={() => deleteImage(img)}
-              >
-                X
-              </button>
+              <TrashIcon className="w-5 h-5" />
+            </button>
 
-              
-
-              <img
-                src={img.image_url}
-                className="w-full h-32 object-cover"
-              />
-
-              <div className="px-3 pb-3 bg-gray-50">
-  <div className="flex gap-2">
+            {/* BOTTOM: Rotate Bar */}
+{/* BOTTOM: Rotate Bar */}
+<div className="absolute inset-x-0 bottom-1 px-1.5">
+  <div
+    className="
+      flex gap-1.5
+      bg-black/55 backdrop-blur
+      rounded-lg p-1
+    "
+  >
     <button
       type="button"
-      disabled={!!rotating[img.id]}
+      disabled={isRotating}
       onClick={() => rotateAndReplaceImage(img, "left")}
-      className="flex-1 bg-gray-200 hover:bg-gray-300 text-xs py-2 rounded-lg disabled:opacity-60"
+      className="
+        flex-1 inline-flex items-center justify-center gap-1
+        text-white text-[11px] font-medium
+        py-1.5 rounded-md
+        hover:bg-white/10 active:scale-[0.98] transition
+        disabled:opacity-60
+      "
     >
-      {rotating[img.id] ? "Rotating..." : "Rotate ⟲"}
+      <ArrowUturnLeftIcon className="w-3.5 h-3.5" />
+      {isRotating ? "..." : "Left"}
     </button>
 
     <button
       type="button"
-      disabled={!!rotating[img.id]}
+      disabled={isRotating}
       onClick={() => rotateAndReplaceImage(img, "right")}
-      className="flex-1 bg-gray-200 hover:bg-gray-300 text-xs py-2 rounded-lg disabled:opacity-60"
+      className="
+        flex-1 inline-flex items-center justify-center gap-1
+        text-white text-[11px] font-medium
+        py-1.5 rounded-md
+        hover:bg-white/10 active:scale-[0.98] transition
+        disabled:opacity-60
+      "
     >
-      {rotating[img.id] ? "Rotating..." : "Rotate ⟳"}
+      <ArrowUturnRightIcon className="w-3.5 h-3.5" />
+      {isRotating ? "..." : "Right"}
     </button>
   </div>
 </div>
 
+          </div>
 
-              {/* CAPTION INPUT */}
-              <div className="p-3 border-t bg-gray-50">
-<input
-  type="text"
-  className="w-full px-3 py-2 rounded border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none text-sm"
-  placeholder="Add caption..."
-  value={captionDrafts[img.id] || ""}
-  onChange={(e) =>
-    setCaptionDrafts((prev) => ({
-      ...prev,
-      [img.id]: e.target.value,
-    }))
-  }
-  onBlur={() => saveCaption(img.id)}
-/>
-
-              </div>
-            </div>
-          ))}
+          {/* CAPTION */}
+          <div className="p-3 bg-gray-50 border-t">
+            <input
+              type="text"
+              className="
+                w-full px-3 py-2 rounded-xl
+                border border-gray-200 bg-white
+                focus:ring-2 focus:ring-blue-400 focus:outline-none
+                text-sm
+              "
+              placeholder="Add caption…"
+              value={captionDrafts[img.id] || ""}
+              onChange={(e) =>
+                setCaptionDrafts((prev) => ({
+                  ...prev,
+                  [img.id]: e.target.value,
+                }))
+              }
+              onBlur={() => saveCaption(img.id)}
+            />
+          </div>
         </div>
-      )}
+      );
+    })}
+  </div>
+)}
+
 
       {/* SUMMARY CARD */}
       <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
