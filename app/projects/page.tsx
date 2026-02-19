@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { FileText, Clock } from "lucide-react";
+
+
 
 export default function ProjectsListPage() {
   const router = useRouter();
@@ -59,7 +62,7 @@ return (
   <div className="min-h-screen bg-gray-100">
 
 {/* HEADER */}
-<div className="bg-blue-700 text-white shadow-lg">
+<div className="bg-blue-900 text-white shadow-lg">
 
   {/* SAFE AREA TOP */}
   <div className="h-[env(safe-area-inset-top)]" />
@@ -74,14 +77,14 @@ return (
           {/* Desktop Add Button */}
           <button
             onClick={newProject}
-            className="hidden md:block bg-white text-blue-700 font-semibold px-4 py-2 rounded-lg shadow-sm hover:bg-blue-50 active:scale-95"
+            className="hidden md:block bg-white text-blue-900 font-semibold px-4 py-2 rounded-lg shadow-sm hover:bg-blue-50 active:scale-95"
           >
             + Add Project
           </button>
         </div>
 
         <p className="text-white mt-1 text-sm opacity-90">
-  Manage daily maintenance reports with ease
+  Manage daily reports
 </p>
 
 
@@ -131,39 +134,39 @@ return (
 
       {/* Projects Grid */}
       {!loading && projectsFiltered.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-5 mt-4">
+
           {projectsFiltered.map((p) => (
             <div
               key={p.id}
               onClick={() => openProject(p.id)}
-              className="
-                bg-white rounded-2xl shadow-sm border border-gray-200 p-5 cursor-pointer
-                hover:shadow-md hover:border-blue-400 transition-all active:scale-[0.98]
-                flex flex-col
-              "
-            >
+className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 cursor-pointer
+                hover:shadow-md hover:border-blue-400 transition-all active:scale-[0.98] flex flex-col">
+
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                  <div className="bg-blue-100 text-blue-700 w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold">
+                {/* <div className="bg-blue-100 text-blue-700 w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold">
                     {p.name.charAt(0)}
-                  </div>
+                  </div>*/}
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-800">{p.name}</h2>
-                    <p className="text-gray-600 text-sm line-clamp-2">
-                      {p.description || "No description provided."}
-                    </p>
+<h2 className="text-lg font-semibold text-gray-800 mb-1">{p.name}</h2>
+<p className="text-gray-700 text-sm font-light line-clamp-2 mb-3">
+  {p.description || "No description provided."}
+</p>
+
                   </div>
                 </div>
 
-                {/* Status Tag */}
+                {/* Status Tag
                 <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700 font-semibold">
                   Active
-                </span>
+                </span> */}
               </div>
 
-              <div className="text-xs text-gray-400 mt-4">
-                Created: {new Date(p.created_at).toLocaleDateString()}
-              </div>
+    <div className="flex items-center gap-1.5 text-gray-700 text-xs mt-auto">
+      <Clock className="w-4 h-4" />
+      <span>{new Date(p.created_at).toLocaleDateString()}</span>
+    </div>
             </div>
           ))}
         </div>
@@ -174,7 +177,7 @@ return (
     <button
       onClick={newProject}
       className="
-        md:hidden fixed bottom-6 right-6 bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg
+        md:hidden fixed bottom-6 right-6 bg-blue-900 text-white w-14 h-14 rounded-full shadow-lg
         flex items-center justify-center text-3xl font-bold hover:bg-blue-700 active:scale-90
       "
     >

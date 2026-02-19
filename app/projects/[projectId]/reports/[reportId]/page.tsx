@@ -121,7 +121,7 @@ return (
   <div className="min-h-screen bg-gray-100">
 
 {/* HEADER */}
-<div className="bg-blue-700 text-white shadow-lg">
+<div className="bg-blue-900 text-white shadow-lg">
 
   {/* SAFE AREA TOP */}
   <div className="h-[env(safe-area-inset-top)]" />
@@ -129,95 +129,62 @@ return (
   {/* HEADER CONTENT */}
   <div className="p-6 rounded-b-3xl">
 
-  <div className="max-w-4xl mx-auto flex justify-between items-center">
+    <div className="max-w-4xl mx-auto flex justify-between items-center flex-wrap gap-4">
 
-    <div className="flex items-center gap-4">
-      {/* BACK BUTTON */}
-      <button
-        onClick={() => router.back()}
-        className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition active:scale-95"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-          stroke="currentColor"
-          className="w-6 h-6"
+      {/* LEFT: BACK BUTTON + TITLE/DATE */}
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => router.back()}
+          className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition active:scale-95"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M15.75 19.5L8.25 12l7.5-7.5"
-          />
-        </svg>
-      </button>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth="2"
+            stroke="currentColor"
+            className="w-6 h-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15.75 19.5L8.25 12l7.5-7.5"
+            />
+          </svg>
+        </button>
 
-      <div className="flex items-center gap-2">
-
-  {/* EDIT */}
-  <button
-    onClick={() => router.push(`/projects/${projectId}/reports/${reportId}/edit`)}
-    className="bg-white/20 hover:bg-white/30 text-white font-semibold py-2 px-3 rounded-xl transition active:scale-95"
-  >
-    Edit
-  </button>
-
-
-
-  {/* PDF DOWNLOAD */}
-  {report.pdf_url && (
-    <a
-      href={`${report.pdf_url}?v=${encodeURIComponent(report.updated_at || Date.now())}`}
-
-      target="_blank"
-      className="flex items-center gap-2 bg-white text-blue-700 font-semibold py-2 px-4 rounded-xl shadow hover:bg-gray-100 active:scale-95 transition"
-    >
-      PDF
-    </a>
-  )}
-
-</div>
-
-
-      <div>
-        <h1 className="text-2xl font-bold">Daily Report</h1>
-        <p className="text-white text-sm mt-1 opacity-90">
-  {report.report_date}
-</p>
-
+        <div>
+          <h1 className="text-2xl font-bold">Daily Report</h1>
+          <p className="text-white text-sm mt-1 opacity-90">
+            {report.report_date}
+          </p>
+        </div>
       </div>
-    </div>
-    </div>
 
-        {/* PDF DOWNLOAD BUTTON 
+      {/* RIGHT: EDIT & PDF BUTTONS */}
+      <div className="flex items-center gap-2 justify-end flex-wrap w-full sm:w-auto">
+        <button
+          onClick={() => router.push(`/projects/${projectId}/reports/${reportId}/edit`)}
+          className="bg-white/20 hover:bg-white/30 text-white font-semibold py-2 px-3 rounded-xl transition active:scale-95"
+        >
+          Edit
+        </button>
+
         {report.pdf_url && (
           <a
-            href={report.pdf_url}
+            href={`${report.pdf_url}?v=${encodeURIComponent(report.updated_at || Date.now())}`}
             target="_blank"
             className="flex items-center gap-2 bg-white text-blue-700 font-semibold py-2 px-4 rounded-xl shadow hover:bg-gray-100 active:scale-95 transition"
           >
-            {/* PDF Icon 
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.8}
-              stroke="currentColor"
-              className="w-5 h-5"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M19.5 14.25v-2.625a2.625 2.625 0 00-2.625-2.625H7.125A2.625 2.625 0 004.5 11.625v6.75A2.625 2.625 0 007.125 21h9.75A2.625 2.625 0 0019.5 18.375V16.5M12 6.75V15m0 0l-3-3m3 3l3-3"
-              />
-            </svg>
             PDF
           </a>
-        )}*/}
-
+        )}
       </div>
+
     </div>
+  </div>
+</div>
+
 
     {/* MAIN CONTENT */}
     <div className="max-w-4xl mx-auto p-5 space-y-10">

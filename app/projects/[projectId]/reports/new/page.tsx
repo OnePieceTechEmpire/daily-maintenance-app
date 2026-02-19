@@ -194,21 +194,19 @@ useEffect(() => {
   // -----------------------------------------------
   // Load existing images
   // -----------------------------------------------
-  async function uploadImages(e: any) {
+async function uploadImages(e: any) {
   if (!reportId) return;
 
-  const files = Array.from(e.target.files);
+  const files = Array.from(e.target.files || []) as File[];
+  e.target.value = ""; // ✅ important for Android
+
   if (files.length === 0) return;
 
   setUploading(true);
-
-  // Upload sequentially OR parallel (we do sequential for stability)
-for (const file of files as File[]) {
-  await handleSingleUpload(file);
-}
-
+  for (const file of files) await handleSingleUpload(file);
   setUploading(false);
 }
+
 
 
 async function handleSingleUpload(originalFile: File) {
@@ -427,7 +425,7 @@ return (
 
     {/* HEADER */}
 {/* HEADER */}
-<div className="bg-blue-700 text-white shadow-lg">
+<div className="bg-blue-900 text-white shadow-lg">
 
   {/* SAFE AREA TOP */}
   <div className="h-[env(safe-area-inset-top)]" />
@@ -472,37 +470,43 @@ return (
 
     <div className="max-w-4xl mx-auto p-5 space-y-6">
 
-      {/* UPLOAD IMAGE */}
-      <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
-        <label className="block font-semibold text-gray-700 mb-2">
-          Upload Images
-        </label>
+<div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
+  <label className="block font-semibold text-gray-700 mb-2">Upload Images</label>
 
-        <label className="
-            flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-xl
-            cursor-pointer bg-gray-50 hover:bg-gray-100 transition
-          ">
-          <span className="text-gray-600 text-sm">Tap to upload image</span>
-    {/* Hidden file input */}
-    <input
-      type="file"
-      multiple
-      onChange={uploadImages}
-      className="hidden"
-    />
+  <div className="grid grid-cols-2 gap-3">
+    {/* CAMERA */}
+    <label className="flex items-center justify-center p-4 rounded-xl bg-blue-600 text-white font-semibold cursor-pointer hover:bg-blue-700 active:scale-95 transition">
+      📷 Camera
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={uploadImages}
+        className="hidden"
+      />
+    </label>
 
+    {/* GALLERY */}
+    <label className="flex items-center justify-center p-4 rounded-xl bg-gray-100 text-gray-800 font-semibold cursor-pointer hover:bg-gray-200 active:scale-95 transition border">
+      🖼️ Gallery
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={uploadImages}
+        className="hidden"
+      />
+    </label>
+  </div>
 
-
-        </label>
-
-          {/* 🔥 Upload indicator shows HERE */}
   {uploading && (
-    <div className="flex items-center gap-2 text-gray-600 text-sm mt-2">
+    <div className="flex items-center gap-2 text-gray-600 text-sm mt-3">
       <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
       Uploading images...
     </div>
   )}
-      </div>
+</div>
+
 
       {/* IMAGE GRID */}
       {images.length > 0 && (
