@@ -657,9 +657,7 @@ return (
       <label className="block font-semibold text-gray-800">
         Upload Photos
       </label>
-      <p className="text-xs text-gray-500 mt-1">
-        Use Camera for new photos, or Gallery to select existing images.
-      </p>
+
     </div>
 
     {/* Small status pill */}
@@ -692,7 +690,7 @@ return (
 
         <div className="flex-1">
           <div className="text-sm font-bold leading-tight">Camera</div>
-          <div className="text-[11px] opacity-90 mt-0.5">
+          <div className="text-[10px] opacity-90 mt-0.5">
             Take a new photo
           </div>
         </div>
@@ -728,7 +726,7 @@ return (
           <div className="text-sm font-bold text-gray-800 leading-tight">
             Gallery
           </div>
-          <div className="text-[11px] text-gray-500 mt-0.5">
+          <div className="text-[10px] text-gray-500 mt-0.5">
             Choose multiple
           </div>
         </div>
