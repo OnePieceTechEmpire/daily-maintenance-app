@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { useAuthGuard } from "@/lib/useAuthGuard";
 import {
   EyeIcon,
     DocumentArrowDownIcon
@@ -34,36 +35,56 @@ type DailyReport = {
   );
   const [todayReport, setTodayReport] = useState<DailyReport | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { userId, checking } = useAuthGuard();
 
 
-  useEffect(() => {
-    loadProject();
+useEffect(() => {
+  loadProject();
+}, []);
+
+useEffect(() => {
+  if (project?.id) {
     loadReports();
-  }, []);
+  }
+}, [project?.id]);
 
   useEffect(() => {
     loadReportForSelectedDate();
   }, [selectedDate, reports]);
 
-  async function loadProject() {
-    let { data } = await supabase
-      .from("projects")
-      .select("*")
-      .eq("id", projectId)
-      .single();
+async function loadProject() {
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("id", projectId)
+    .single();
 
-    setProject(data);
+  // ✅ If RLS blocks it, data will be null (or error)
+  if (error || !data) {
+    console.warn("No access / project not found:", error);
+    router.replace("/projects"); // kick user out
+    return;
   }
 
-  async function loadReports() {
-    let { data } = await supabase
-      .from("daily_reports")
-      .select("*")
-      .eq("project_id", projectId)
-      .order("report_date", { ascending: false });
+  setProject(data);
+}
 
-    setReports(data || []);
+async function loadReports() {
+  const { data, error } = await supabase
+    .from("daily_reports")
+    .select("*")
+    .eq("project_id", projectId)
+    .order("report_date", { ascending: false });
+
+  // If blocked, return empty and also kick out (optional)
+  if (error) {
+    console.warn("Reports blocked:", error);
+    setReports([]);
+    return;
   }
+
+  setReports(data || []);
+}
 
   async function loadReportForSelectedDate() {
     const report = reports.find((r: any) => r.report_date === selectedDate);

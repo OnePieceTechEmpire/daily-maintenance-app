@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { FileText, Clock } from "lucide-react";
+import { useAuthGuard } from "@/lib/useAuthGuard";
 
 
 
@@ -14,26 +15,31 @@ export default function ProjectsListPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 const [sort, setSort] = useState("newest");
+const { userId, checking } = useAuthGuard();
 
 
 
 
-  useEffect(() => {
-    loadProjects();
-  }, []);
 
-  async function loadProjects() {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("projects")
-      .select("*")
-      .order("created_at", { ascending: false });
+useEffect(() => {
+  if (!checking && userId) loadProjects();
+}, [checking, userId]);
 
-    if (error) console.error(error);
+async function loadProjects() {
+  if (!userId) return; // safety
+  setLoading(true);
 
-    setProjects(data || []);
-    setLoading(false);
-  }
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("created_by", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) console.error(error);
+
+  setProjects(data || []);
+  setLoading(false);
+}
 
   function openProject(id: string) {
     router.push(`/projects/${id}/dashboard`);
@@ -63,6 +69,7 @@ return (
 
 {/* HEADER */}
 <div className="bg-blue-900 text-white shadow-lg">
+  
 
   {/* SAFE AREA TOP */}
   <div className="h-[env(safe-area-inset-top)]" />
@@ -71,17 +78,31 @@ return (
   <div className="p-6 rounded-b-3xl">
       <div className="max-w-6xl mx-auto">
 
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Projects</h1>
+<div className="flex justify-between items-center">
+  <h1 className="text-3xl font-bold">Projects</h1>
 
-          {/* Desktop Add Button */}
-          <button
-            onClick={newProject}
-            className="hidden md:block bg-white text-blue-900 font-semibold px-4 py-2 rounded-lg shadow-sm hover:bg-blue-50 active:scale-95"
-          >
-            + Add Project
-          </button>
-        </div>
+  <div className="flex items-center gap-3">
+    {/* Desktop Add Button */}
+    <button
+      onClick={newProject}
+      className="hidden md:block bg-white text-blue-900 font-semibold px-4 py-2 rounded-lg shadow-sm hover:bg-blue-50 active:scale-95 transition"
+    >
+      + Add Project
+    </button>
+
+    {/* Logout */}
+    <button
+      onClick={async () => {
+        await supabase.auth.signOut();
+        router.push("/login");
+      }}
+      className="bg-white/15 backdrop-blur-sm text-white px-4 py-2 rounded-lg 
+                 hover:bg-white/25 transition active:scale-95 border border-white/20"
+    >
+      Logout
+    </button>
+  </div>
+</div>
 
         <p className="text-white mt-1 text-sm opacity-90">
   Manage daily reports
@@ -111,8 +132,20 @@ return (
 
     <div className="p-5 max-w-6xl mx-auto">
 
+      {/* Loading State */}
+{(checking || loading) && (
+  <div className="flex items-center justify-center py-16">
+    <div className="flex items-center gap-3 text-gray-600">
+      <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+      <span className="text-sm font-medium">
+        {checking ? "Checking session..." : "Loading projects..."}
+      </span>
+    </div>
+  </div>
+)}
+
       {/* Empty State */}
-      {!loading && projectsFiltered.length === 0 && (
+      {!checking && !loading && projectsFiltered.length === 0 &&  (
         <div className="flex flex-col items-center mt-20 text-center">
           <img
             src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png"
@@ -133,7 +166,7 @@ return (
       )}
 
       {/* Projects Grid */}
-      {!loading && projectsFiltered.length > 0 && (
+      {!checking && !loading && projectsFiltered.length > 0 &&  (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-5 mt-4">
 
           {projectsFiltered.map((p) => (

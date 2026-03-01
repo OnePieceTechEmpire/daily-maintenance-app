@@ -790,6 +790,7 @@ return (
             </button>
 
             {/* BOTTOM: Rotate Bar */}
+            
 {/* BOTTOM: Rotate Bar */}
 <div className="absolute inset-x-0 bottom-1 px-1.5">
   <div
@@ -830,6 +831,17 @@ return (
       <ArrowUturnRightIcon className="w-3.5 h-3.5" />
       {isRotating ? "..." : "Right"}
     </button>
+    <button
+  type="button"
+  onClick={() =>
+    router.push(
+      `/projects/${projectId}/reports/${reportId}/annotate/${img.id}`
+    )
+  }
+  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-2 rounded-lg"
+>
+  ✏️ Annotate
+</button>
   </div>
 </div>
 

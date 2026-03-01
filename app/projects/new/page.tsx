@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { useAuthGuard } from "@/lib/useAuthGuard";
 
 export default function NewProjectPage() {
   const router = useRouter();
@@ -10,14 +11,19 @@ export default function NewProjectPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+  const { userId, checking } = useAuthGuard();
 
   async function createProject() {
+if (checking) return;
+if (!userId) return alert("Please login first.");
+
     setLoading(true);
 
     const { data, error } = await supabase.from("projects").insert([
       {
         name,
         description,
+        created_by: userId, // ✅ important
       },
     ]).select().single();
 
