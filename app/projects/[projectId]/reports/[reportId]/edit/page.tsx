@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import imageCompression from "browser-image-compression";
 import { SparklesIcon } from '@heroicons/react/24/solid'; // or outline if you prefer
 import { CameraIcon, PhotoIcon } from "@heroicons/react/24/solid";
+import { translations } from "@/lib/i18n";
 import {
   TrashIcon,
   ArrowUturnLeftIcon,
@@ -48,7 +49,9 @@ export default function EditReportPage() {
   const [captionDrafts, setCaptionDrafts] = useState<Record<string, string>>({});
     const [weather, setWeather] = useState<any[]>([]);
   const [materials, setMaterials] = useState<any[]>([]);
-const [equipment, setEquipment] = useState<
+  const [projectLanguage, setProjectLanguage] = useState<"English" | "Bahasa Melayu">("English");
+  const t = translations[projectLanguage];
+  const [equipment, setEquipment] = useState<
   { name: string; qty: string; status: string; note?: string }[]
 >([]);
   const [workers, setWorkers] = useState({
@@ -63,14 +66,27 @@ const [equipment, setEquipment] = useState<
     others: [] as { label: string; count: number }[],
   });
 
+  async function loadProjectLanguage() {
+  const { data, error } = await supabase
+    .from("projects")
+    .select("output_language")
+    .eq("id", projectId)
+    .single();
 
+  if (!error && data?.output_language === "Bahasa Melayu") {
+    setProjectLanguage("Bahasa Melayu");
+  } else {
+    setProjectLanguage("English");
+  }
+}
   // -----------------------------------------------
   // Load Report + Images
   // -----------------------------------------------
-  useEffect(() => {
-    loadReport();
-    loadImages();
-  }, []);
+useEffect(() => {
+  loadProjectLanguage();
+  loadReport();
+  loadImages();
+}, []);
 
 async function loadReport() {
   const { data, error } = await supabase
@@ -91,6 +107,8 @@ async function loadReport() {
     console.error(error);
     return;
   }
+
+
 
   setReportStatus((data.status as any) || "draft");
 
@@ -460,7 +478,7 @@ await supabase.from("daily_reports").update({
   // DELETE IMAGE
   // -----------------------------------------------
 async function deleteImage(img: any) {
-  const confirmDelete = confirm("Delete this image?");
+  const confirmDelete = confirm(t.deleteImageConfirm);
   if (!confirmDelete) return;
 
   // --- 1) Extract correct storage path from URL ---
@@ -637,7 +655,7 @@ return (
 
   {/* Title + Date */}
   <div className="flex flex-col">
-    <h1 className="text-3xl font-bold">Edit Report</h1>
+    <h1 className="text-3xl font-bold">{t.editReport}</h1>
     <p className="text-white/80 text-sm mt-1">
       {reportDate}
     </p>
@@ -655,7 +673,7 @@ return (
   <div className="flex items-start justify-between gap-3">
     <div>
       <label className="block font-semibold text-gray-800">
-        Upload Photos
+        {t.uploadImages}
       </label>
 
     </div>
@@ -664,7 +682,7 @@ return (
     {uploading ? (
       <span className="shrink-0 inline-flex items-center gap-2 text-xs font-semibold px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
         <span className="w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-        Uploading
+        {t.uploadingImages}
       </span>
     ) : (
       <span className="shrink-0 text-[11px] font-semibold px-3 py-1 rounded-full bg-gray-50 text-gray-600 border border-gray-200">
@@ -857,7 +875,7 @@ return (
                 focus:ring-2 focus:ring-blue-400 focus:outline-none
                 text-sm
               "
-              placeholder="Add caption…"
+              placeholder={t.addCaptionPlaceholder}
               value={captionDrafts[img.id] || ""}
               onChange={(e) =>
                 setCaptionDrafts((prev) => ({
@@ -878,7 +896,7 @@ return (
       {/* SUMMARY CARD */}
       <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
         <label className="block font-semibold text-gray-700 mb-2">
-          Summary
+          {t.summary}
         </label>
 
         <textarea
@@ -888,7 +906,7 @@ return (
           "
           value={summary}
           onChange={(e) => saveSummary(e.target.value)}
-          placeholder="Update your summary..."
+          placeholder={t.updateSummaryPlaceholder}
         />
 
         {/* BUTTON ROW */}
@@ -915,12 +933,12 @@ return (
     {cleaning ? (
       <>
         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-        Improving summary…
+        {t.improvingSummary}
       </>
     ) : (
       <>
         <SparklesIcon className="w-5 h-5" />
-        Clean Summary with AI
+        {t.cleanSummaryWithAi}
       </>
     )}
   </button>
@@ -932,7 +950,7 @@ return (
 
       {/* WORKERS SECTION */}
 <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
-  <h3 className="font-semibold text-gray-800 mb-4">Workers on Site</h3>
+  <h3 className="font-semibold text-gray-800 mb-4">{t.workersOnSite}</h3>
 
   <div className="space-y-3">
     {[
@@ -967,13 +985,13 @@ return (
 
   {/* OTHERS */}
   <div className="mt-5">
-    <h4 className="text-sm font-semibold text-gray-700 mb-2">Others</h4>
+    <h4 className="text-sm font-semibold text-gray-700 mb-2">{t.others}</h4>
 
     {workers.others.map((item, index) => (
       <div key={index} className="flex gap-2 mb-2">
         <input
           type="text"
-          placeholder="Department"
+          placeholder={t.addOtherDepartment}
           className="flex-1 px-2 py-1 border rounded"
           value={item.label}
           onChange={(e) => {
@@ -1024,14 +1042,14 @@ return (
         autosaveExtraFields({ workers: newWorkers });
       }}
     >
-      + Add Other Department
+      {t.addOtherDepartment}
     </button>
   </div>
 </div>
 
 {/* WEATHER SECTION */}
 <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
-  <h3 className="font-semibold text-gray-800 mb-4">Weather Conditions</h3>
+  <h3 className="font-semibold text-gray-800 mb-4">{t.weatherConditions}</h3>
 
   {weather.map((w, index) => (
     <div key={index} className="flex flex-col sm:flex-row gap-2 mb-3">
@@ -1073,7 +1091,7 @@ return (
           autosaveExtraFields({ weather: updated });
         }}
       >
-        <option value="">Select weather</option>
+        <option value="">{t.selectWeather}</option>
         <option value="Sunny">Sunny</option>
         <option value="Cloudy">Cloudy</option>
         <option value="Rain">Rain</option>
@@ -1107,14 +1125,14 @@ return (
       autosaveExtraFields({ weather: updated });
     }}
   >
-    + Add Weather Period
+    {t.addWeatherPeriod}
   </button>
 </div>
 
 {/* MATERIALS DELIVERED */}
 <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
   <h3 className="font-semibold text-gray-800 mb-4">
-    Materials Delivered
+    {t.materialsDelivered}
   </h3>
 
   {materials.map((m, index) => (
@@ -1213,14 +1231,14 @@ return (
       autosaveExtraFields({ materials: updated });
     }}
   >
-    + Add Material
+    {t.addMaterial}
   </button>
 </div>
 
 {/* MACHINERY / EQUIPMENT */}
 <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
   <h3 className="font-semibold text-gray-800 mb-4">
-    Machinery / Equipment
+    {t.machineryEquipment}
   </h3>
 
   {equipment.map((e, index) => (
@@ -1316,7 +1334,7 @@ return (
       autosaveExtraFields({ equipment: updated });
     }}
   >
-    + Add Equipment
+    {t.addEquipment}
   </button>
 </div>
 
@@ -1333,7 +1351,7 @@ return (
             text-lg font-semibold shadow active:scale-95 transition
           "
         >
-          {loading ? "Submitting.." : "Submit Report"}
+          {loading ? t.submitting : t.submitReport}
         </button>
       </div>
       )}
@@ -1348,7 +1366,7 @@ return (
       disabled:opacity-60 disabled:cursor-not-allowed
     "
   >
-    {regenerating ? "Regenerating PDF..." : "Regenerate PDF"}
+    {regenerating ? t.regeneratingPdf : t.regeneratePdf}
   </button>
 )}
 

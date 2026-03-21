@@ -8,6 +8,7 @@ import {
   EyeIcon,
     DocumentArrowDownIcon
 } from "@heroicons/react/24/solid";
+import { translations, getProjectLanguage, translateStatus } from "@/lib/i18n";
 
 export default function ProjectDashboard() {
 
@@ -36,6 +37,8 @@ type DailyReport = {
   const [todayReport, setTodayReport] = useState<DailyReport | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const { userId, checking } = useAuthGuard();
+  const lang = getProjectLanguage(project);
+const t = translations[lang];
 
 
 useEffect(() => {
@@ -163,14 +166,14 @@ return (
             className="w-full text-left px-4 py-2 hover:bg-gray-100"
             onClick={() => router.push("/projects")}
           >
-            My Projects
+            {t.myProjects}
           </button>
 
           <button
             className="w-full text-left px-4 py-2 hover:bg-gray-100"
             onClick={() => router.push(`/projects/${projectId}/reports`)}
           >
-            All Reports
+            {t.allReports}
           </button>
         </div>
       )}
@@ -184,7 +187,7 @@ return (
 
       {/* DATE SELECTOR CARD */}
       <div className="bg-white shadow-sm border border-gray-200 p-5 rounded-2xl">
-        <label className="text-sm font-semibold text-gray-700">Select Date</label>
+        <label className="text-sm font-semibold text-gray-700">{t.selectDate}</label>
         <input
           type="date"
           value={selectedDate}
@@ -200,7 +203,7 @@ return (
       <div className="bg-white shadow-sm border border-gray-200 p-5 rounded-2xl">
 
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-800">Daily Report</h2>
+          <h2 className="text-lg font-semibold text-gray-800">{t.dailyReport}</h2>
 
           <span
             className={`
@@ -214,7 +217,9 @@ return (
               }
             `}
           >
-            {todayReport?.status ? todayReport.status.toUpperCase() : "NOT STARTED"}
+            {todayReport?.status
+  ? translateStatus(todayReport.status, lang).toUpperCase()
+  : t.notStarted.toUpperCase()}
           </span>
         </div>
 
@@ -239,11 +244,11 @@ return (
     }
   `}
 >
-  {!todayReport
-    ? "Create Report"
-    : todayReport.status === "draft"
-    ? "Continue Report"
-    : "View Report"}
+{!todayReport
+  ? t.createReport
+  : todayReport.status === "draft"
+  ? t.continueReport
+  : t.viewReport}
 </button>
 
 {todayReport?.status === "completed" && todayReport?.pdf_url && (
@@ -269,7 +274,7 @@ return (
           d="M19.5 14.25v-2.625a2.625 2.625 0 00-2.625-2.625H7.125A2.625 2.625 0 004.5 11.625v6.75A2.625 2.625 0 007.125 21h9.75A2.625 2.625 0 0019.5 18.375V16.5M12 6.75V15m0 0l-3-3m3 3l3-3"
         />
       </svg>
-      Download PDF
+      {t.downloadPdf}
     </a>
     
   </div>
@@ -282,10 +287,10 @@ return (
 
 {/* SUBMITTED REPORTS */}
 <div className="mt-6">
-  <h3 className="text-xl font-semibold text-gray-800 mb-3">Recent Reports</h3>
+  <h3 className="text-xl font-semibold text-gray-800 mb-3">{t.recentReports}</h3>
 
   {reports.length === 0 ? (
-    <p className="text-gray-500">No reports submitted yet.</p>
+    <p className="text-gray-500">{t.noReportsYet}</p>
   ) : (
     <>
       <div className="space-y-3">
@@ -306,7 +311,7 @@ return (
                   }
                 `}
               >
-                {r.status.toUpperCase()}
+                {translateStatus(r.status, lang).toUpperCase()}
               </p>
             </div>
 
@@ -335,7 +340,7 @@ return (
       <span className="text-[10px] font-medium text-gray-500">PDF</span>
     </a>
   ) : (
-    <span className="text-[10px] text-gray-400 italic">Pending</span>
+    <span className="text-[10px] text-gray-400 italic">{t.pending}</span>
   )}
 
 </div>
@@ -350,7 +355,7 @@ return (
           onClick={() => router.push(`/projects/${projectId}/reports`)}
           className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 active:scale-95"
         >
-          View All Reports →
+          {t.viewAllReports}
         </button>
       )}
     </>
