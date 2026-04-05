@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Font,
 } from "@react-pdf/renderer";
+import { WORKER_LABEL_MAP } from "@/lib/workerTypes";
 
 Font.registerHyphenationCallback(word => [word]);
 
@@ -28,15 +29,11 @@ type EquipmentItem = {
   note?: string;
 };
 
-type Workers = {
-  partition: number;
-  ceiling: number;
-  mne: number;
-  flooring: number;
-  brickwork: number;
-  carpenter: number;
-  painter: number;
-  others: { label: string; count: number }[];
+type Workers = Record<string, number>;
+
+type CustomWorkerType = {
+  key: string;
+  label: string;
 };
 
 
@@ -48,6 +45,7 @@ type ImageItem = {
 type Props = {
   projectName: string;
   projectDescription?: string | null;
+  projectLocation?: string | null;
   reportDate: string;
   summary: string | null;
   images: ImageItem[];
@@ -55,10 +53,14 @@ type Props = {
   materials: MaterialItem[];
   equipment: EquipmentItem[];
   workers: Workers;
+  workerTypes: string[];
+  customWorkerTypes: CustomWorkerType[];
+  language?: "English" | "Bahasa Melayu";
 };
 export default function ReportPDF({
   projectName,
-   projectDescription,
+  projectDescription,
+  projectLocation,
   reportDate,
   summary,
   images,
@@ -66,8 +68,66 @@ export default function ReportPDF({
   materials,
   equipment,
   workers,
+  workerTypes,
+  customWorkerTypes,
+  language = "English",
 }: Props) {
+
   const imagePages = chunk(images, 6);
+
+  const pdfText =
+  language === "Bahasa Melayu"
+    ? {
+        reportTitle: "Rekod Laporan Tapak",
+        date: "Tarikh",
+        project: "PROJEK",
+        projectLocation: "Lokasi Projek",
+        weather: "Cuaca",
+        materials: "Bahan Dihantar",
+        equipment: "Jentera / Peralatan",
+        workers: "Pekerja",
+        summary: "Ringkasan",
+        photos: "Gambar",
+        noWeather: "Tiada cuaca direkodkan",
+        noWorkers: "Tiada pekerja direkodkan",
+        noSummary: "Tiada ringkasan diberikan.",
+        generatedBy: "Dijana secara automatik oleh Sistem Rekod Site Diary",
+      }
+    : {
+        reportTitle: "Site Diary Record",
+        date: "Date",
+        project: "PROJECT",
+        projectLocation: "Project Location",
+        weather: "Weather",
+        materials: "Materials Delivered",
+        equipment: "Machinery / Equipment",
+        workers: "Workers",
+        summary: "Summary",
+        photos: "Photos",
+        noWeather: "No weather recorded",
+        noWorkers: "No workers recorded",
+        noSummary: "No summary provided.",
+        generatedBy: "Generated automatically by Site Diary Record System",
+      };
+
+const safeWorkers =
+  workers && typeof workers === "object" ? workers : {};
+
+const visibleStandardWorkers = (workerTypes || [])
+  .filter((key) => (safeWorkers[key] ?? 0) > 0)
+  .map((key) => ({
+    label: WORKER_LABEL_MAP[key] || key,
+    count: safeWorkers[key] ?? 0,
+  }));
+
+const visibleCustomWorkers = (customWorkerTypes || [])
+  .filter((item) => item?.key && (safeWorkers[item.key] ?? 0) > 0)
+  .map((item) => ({
+    label: item.label,
+    count: safeWorkers[item.key] ?? 0,
+  }));
+
+const visibleWorkers = [...visibleStandardWorkers, ...visibleCustomWorkers];
 
   return (
     <Document>
@@ -77,22 +137,22 @@ export default function ReportPDF({
 
 <View style={styles.sectionBlock}>
   {projectDescription && (
-  <Text style={styles.project}>
-   PROJECT: {projectDescription}
-  </Text>
+<Text style={styles.project}>
+  {pdfText.project}: {projectDescription || projectName}
+</Text>
 )}
 </View>
 
-  <Text style={styles.subtitle}>Site Diary Record</Text>
-  <Text style={styles.date}>
-  Date: {formatDate(reportDate)}
+  <Text style={styles.subtitle}>{pdfText.reportTitle}</Text>
+<Text style={styles.date}>
+  {pdfText.date}: {formatDate(reportDate)}
 </Text>
 
 <View style={styles.sectionBlock}>
   {/* WEATHER */}
-  <Text style={styles.section}>Weather</Text>
+  <Text style={styles.section}>{pdfText.weather}</Text>
   {weather.length === 0 ? (
-    <Text style={styles.muted}>No weather recorded</Text>
+    <Text style={styles.muted}>{pdfText.noWeather}</Text>
   ) : (
     weather.map((w, i) => (
       <Text key={i} style={styles.listItem}>
@@ -106,7 +166,7 @@ export default function ReportPDF({
   <View style={styles.sectionBlock}>
 {materials.length > 0 && (
   <>
-    <Text style={styles.section}>Materials Delivered</Text>
+    <Text style={styles.section}>{pdfText.materials}</Text>
     {materials.map((m, i) => (
       <Text key={i} style={styles.listItem}>
         • {m.name} ({m.qty})
@@ -120,7 +180,7 @@ export default function ReportPDF({
     <View style={styles.sectionBlock}>
 {equipment.length > 0 && (
   <>
-    <Text style={styles.section}>Machinery / Equipment</Text>
+    <Text style={styles.section}>{pdfText.equipment}</Text>
     {equipment.map((e, i) => (
       <Text key={i} style={styles.listItem}>
         • {e.name} – {e.qty} – {e.status}
@@ -130,57 +190,25 @@ export default function ReportPDF({
 )}
 </View>
 
-  {/* WORKERS */}
-      <View style={styles.sectionBlock}>
-<Text style={styles.section}>Workers</Text>
+<View style={styles.sectionBlock}>
+  <Text style={styles.section}>{pdfText.workers}</Text>
 
-{(
-  [
-    ["Partition", workers.partition],
-    ["Ceiling", workers.ceiling],
-    ["M&E", workers.mne],
-    ["Flooring", workers.flooring],
-    ["Brickwork", workers.brickwork],
-    ["Carpenter", workers.carpenter],
-    ["Painter", workers.painter],
-  ] as [string, number][]
-)
-  .filter(([, count]) => count > 0)
-  .map(([label, count], i) => (
-    <Text key={i} style={styles.listItem}>
-      • {label}: {count}
-    </Text>
-  ))}
-
-{/* OTHERS */}
-{workers.others
-  .filter((o) => o.count > 0 && o.label.trim() !== "")
-  .map((o, i) => (
-    <Text key={`other-${i}`} style={styles.listItem}>
-      • {o.label}: {o.count}
-    </Text>
-  ))}
-
-{/* IF EMPTY*/}
-{[
-  workers.partition,
-  workers.ceiling,
-  workers.mne,
-  workers.flooring,
-  workers.brickwork,
-  workers.carpenter,
-  workers.painter,
-  ...workers.others.map((o) => o.count),
-].every((c) => c === 0) && (
-  <Text style={styles.muted}>No workers recorded</Text>
-)}
+  {visibleWorkers.length > 0 ? (
+    visibleWorkers.map((worker, i) => (
+      <Text key={i} style={styles.listItem}>
+        • {worker.label}: {worker.count}
+      </Text>
+    ))
+  ) : (
+    <Text style={styles.muted}>{pdfText.noWorkers}</Text>
+  )}
 </View>
 
       <View style={styles.sectionBlock}>
   {/* SUMMARY */}
-  <Text style={styles.section}>Summary</Text>
+  <Text style={styles.section}>{pdfText.summary}</Text>
   <Text style={styles.paragraph}>
-    {summary || "No summary provided."}
+    {summary || pdfText.noSummary}
   </Text>
   </View>
 

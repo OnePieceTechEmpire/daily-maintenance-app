@@ -21,11 +21,21 @@ export async function POST(req: Request) {
     );
 
     // Fetch report
-    const { data: report } = await supabase
-      .from("daily_reports")
-      .select("*, projects(name, description)")
-      .eq("id", reportId)
-      .single();
+const { data: report } = await supabase
+  .from("daily_reports")
+  .select(`
+    *,
+    projects(
+      name,
+      description,
+      location,
+      output_language,
+      worker_types,
+      custom_worker_types
+    )
+  `)
+  .eq("id", reportId)
+  .single();
 
     if (!report) {
       return NextResponse.json({ error: "Report not found" }, { status: 404 });
@@ -48,7 +58,10 @@ const pdfBuffer = await renderToBuffer(
     weather={report.weather || []}
     materials={report.materials || []}
     equipment={report.equipment || []}
-    workers={report.workers}
+    workers={report.workers || {}}
+    workerTypes={report.projects.worker_types || []}
+    customWorkerTypes={report.projects.custom_worker_types || []}
+    language={report.projects.output_language || "English"}
   />
 );
 

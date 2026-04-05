@@ -5,6 +5,8 @@ import imageCompression from "browser-image-compression";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { CameraIcon, PhotoIcon } from "@heroicons/react/24/solid";
+import { translations } from "@/lib/i18n";
+import { WORKER_LABEL_MAP } from "@/lib/workerTypes";
 import {
   TrashIcon,
   ArrowUturnLeftIcon,
@@ -22,6 +24,7 @@ export default function NewReportPage() {
   const projectId = params.projectId as string;
   const selectedDate = searchParams.get("date") || new Date().toISOString().slice(0, 10);
 
+
   const [reportId, setReportId] = useState<string | null>(null);
   const [images, setImages] = useState<any[]>([]);
   const [summary, setSummary] = useState("");
@@ -36,20 +39,65 @@ const [materials, setMaterials] = useState<any[]>([]);
 const [equipment, setEquipment] = useState<
   { name: string; qty: string; status: string; note?: string }[]
 >([]);
-const [workers, setWorkers] = useState({
-  partition: 0,
-  ceiling: 0,
-  mne: 0,
-  flooring: 0,
-  brickwork: 0,
-  carpenter: 0,
-  painter: 0,
-  plumber: 0,
-  others: [] as { label: string; count: number }[],
-});
+const [workers, setWorkers] = useState<Record<string, number>>({});
+const [projectWorkerTypes, setProjectWorkerTypes] = useState<string[]>([]);
+const [projectCustomWorkerTypes, setProjectCustomWorkerTypes] = useState<
+  { key: string; label: string }[]
+>([]);
 
+const [projectLanguage, setProjectLanguage] = useState<"English" | "Bahasa Melayu">("English");
+const t = translations[projectLanguage];
 
-  
+async function loadProjectLanguage() {
+  const { data, error } = await supabase
+    .from("projects")
+    .select("output_language")
+    .eq("id", projectId)
+    .single();
+
+  if (!error && data?.output_language === "Bahasa Melayu") {
+    setProjectLanguage("Bahasa Melayu");
+  } else {
+    setProjectLanguage("English");
+  }
+}
+
+async function loadProjectWorkerTypes() {
+  const { data, error } = await supabase
+    .from("projects")
+    .select("worker_types, custom_worker_types")
+    .eq("id", projectId)
+    .single();
+
+  if (error) {
+    console.error("Failed to load project worker types:", error);
+    return;
+  }
+
+  const selectedTypes = Array.isArray(data?.worker_types) ? data.worker_types : [];
+  const customTypes = Array.isArray(data?.custom_worker_types)
+    ? data.custom_worker_types
+    : [];
+
+  setProjectWorkerTypes(selectedTypes);
+  setProjectCustomWorkerTypes(customTypes);
+
+  setWorkers((prev) => {
+    const updated = { ...prev };
+
+    selectedTypes.forEach((key) => {
+      if (updated[key] === undefined) updated[key] = 0;
+    });
+
+    customTypes.forEach((item) => {
+      if (item?.key && updated[item.key] === undefined) {
+        updated[item.key] = 0;
+      }
+    });
+
+    return updated;
+  });
+}
 
 
   // -----------------------------------------------
@@ -60,6 +108,9 @@ const initRef = useRef(false);
 useEffect(() => {
   if (initRef.current) return;   // 🚀 prevents double-run even in Strict Mode
   initRef.current = true;
+
+  loadProjectLanguage();
+  loadProjectWorkerTypes();
 
   async function init() {
     console.log("INIT RUNNING...");
@@ -544,9 +595,9 @@ await fetch("/api/generate-pdf", {
   // UI
   // -----------------------------------------------
 
-  if (!reportId) {
-    return <div className="p-6">Preparing draft report...</div>;
-  }
+if (!reportId) {
+  return <div className="p-6">{t.loading}</div>;
+}
 
 return (
   <div className="min-h-screen bg-gray-100">
@@ -584,7 +635,7 @@ return (
 
       {/* Title + Date */}
       <div className="flex flex-col">
-        <h1 className="text-3xl font-bold">Daily Report</h1>
+        <h1 className="text-3xl font-bold">{t.dailyReport}</h1>
         <p className="text-white/80 text-sm mt-1">
           {selectedDate}
         </p>
@@ -602,9 +653,9 @@ return (
 <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
   <div className="flex items-start justify-between gap-3">
     <div>
-      <label className="block font-semibold text-gray-800">
-        Upload Photos
-      </label>
+<label className="block font-semibold text-gray-800">
+  {t.uploadImages}
+</label>
 
     </div>
 
@@ -612,11 +663,11 @@ return (
     {uploading ? (
       <span className="shrink-0 inline-flex items-center gap-2 text-xs font-semibold px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
         <span className="w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-        Uploading
+        {t.uploadingImages}
       </span>
     ) : (
       <span className="shrink-0 text-[11px] font-semibold px-3 py-1 rounded-full bg-gray-50 text-gray-600 border border-gray-200">
-        Ready
+        {t.ready}
       </span>
     )}
   </div>
@@ -637,9 +688,9 @@ return (
         </div>
 
         <div className="flex-1">
-          <div className="text-sm font-bold leading-tight">Camera</div>
+          <div className="text-sm font-bold leading-tight">{t.camera}</div>
           <div className="text-[10px] opacity-90 mt-0.5">
-            Take a new photo
+            {t.cameraSubtitle}
           </div>
         </div>
       </div>
@@ -672,10 +723,10 @@ return (
 
         <div className="flex-1">
           <div className="text-sm font-bold text-gray-800 leading-tight">
-            Gallery
+            {t.gallery}
           </div>
           <div className="text-[10px] text-gray-500 mt-0.5">
-            Choose multiple
+            {t.gallerySubtitle}
           </div>
         </div>
       </div>
@@ -692,7 +743,7 @@ return (
 
   {/* Optional hint line */}
   <p className="mt-3 text-[11px] text-gray-500">
-    Tip: If camera doesn’t appear, allow camera permission in your phone settings.
+    {t.cameraTip}
   </p>
 </div>
 
@@ -714,7 +765,7 @@ return (
             {/* Taller than before, still compact */}
             <img
               src={img.image_url}
-              alt="Report"
+              alt={t.reportImageAlt}
               className="
                 w-full h-44 sm:h-48 md:h-40
                 object-contain
@@ -732,7 +783,7 @@ return (
                 flex items-center justify-center
                 hover:bg-red-700 active:scale-95 transition
               "
-              aria-label="Delete image"
+              aria-label={t.deleteImageAriaLabel}
             >
               <TrashIcon className="w-5 h-5" />
             </button>
@@ -760,7 +811,7 @@ return (
       "
     >
       <ArrowUturnLeftIcon className="w-3.5 h-3.5" />
-      {isRotating ? "..." : "Left"}
+      {isRotating ? "..." : t.rotateLeft}
     </button>
 
     <button
@@ -776,7 +827,7 @@ return (
       "
     >
       <ArrowUturnRightIcon className="w-3.5 h-3.5" />
-      {isRotating ? "..." : "Right"}
+      {isRotating ? "..." : t.rotateRight}
     </button>
         <button
   type="button"
@@ -787,7 +838,7 @@ return (
   }
   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-2 rounded-lg"
 >
-  ✏️ Draw
+  ✏️ {t.annotate}
 </button>
   </div>
 </div>
@@ -825,7 +876,7 @@ return (
 {/* SUMMARY CARD */}
 <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
   <label className="block font-semibold text-gray-700 mb-2">
-    Summary
+   {t.summary}
   </label>
 
   <textarea
@@ -835,7 +886,7 @@ return (
     "
     value={summary}
     onChange={(e) => saveSummary(e.target.value)}
-    placeholder="Write a summary of today's work..."
+    placeholder={t.updateSummaryPlaceholder}
   />
 
   <div className="mt-4 flex items-center gap-3">
@@ -861,12 +912,12 @@ return (
     {cleaning ? (
       <>
         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-        Improving summary…
+        {t.improvingSummary}
       </>
     ) : (
       <>
         <SparklesIcon className="w-5 h-5" />
-        Clean Summary with AI
+        {t.cleanSummaryWithAi}
       </>
     )}
   </button>
@@ -883,106 +934,64 @@ return (
 
 {/* WORKERS SECTION */}
 <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
-  <h3 className="font-semibold text-gray-800 mb-4">Workers on Site</h3>
+  <h3 className="font-semibold text-gray-800 mb-4">{t.workersOnSite}</h3>
 
-  <div className="space-y-3">
-    {[
-      ["partition", "Partition"],
-      ["ceiling", "Ceiling"],
-      ["mne", "M&E"],
-      ["flooring", "Flooring"],
-      ["brickwork", "Brick Work"],
-      ["carpenter", "Carpenter"],
-      ["painter", "Painter"],
-      ["plumber", "Plumber"],
-    ].map(([key, label]) => (
-      <div key={key} className="flex justify-between items-center">
-        <span className="text-sm text-gray-700">{label}</span>
-        <input
-          type="number"
-          min={0}
-          className="w-20 px-2 py-1 border rounded text-center"
-          value={(workers as any)[key]}
-          onChange={(e) => {
-            const value = Number(e.target.value);
-            setWorkers((prev) => {
-              const updated = { ...prev, [key]: value };
+  {projectWorkerTypes.length === 0 && projectCustomWorkerTypes.length === 0 ? (
+    <p className="text-sm text-gray-500">
+      No worker types selected for this project.
+    </p>
+  ) : (
+    <div className="space-y-3">
+      {/* Standard selected worker types */}
+      {projectWorkerTypes.map((key) => (
+        <div key={key} className="flex justify-between items-center gap-3">
+          <span className="text-sm text-gray-700 flex-1 leading-snug">
+            {WORKER_LABEL_MAP[key] || key}
+          </span>
+
+          <input
+            type="number"
+            min={0}
+            className="w-20 px-2 py-1 border rounded text-center"
+            value={workers[key] ?? 0}
+            onChange={(e) => {
+              const value = Number(e.target.value);
+              const updated = { ...workers, [key]: value };
+              setWorkers(updated);
               autosaveExtraFields({ workers: updated });
-              return updated;
-            });
-          }}
-        />
-      </div>
-    ))}
-  </div>
+            }}
+          />
+        </div>
+      ))}
 
-  {/* OTHERS */}
-  <div className="mt-5">
-    <h4 className="text-sm font-semibold text-gray-700 mb-2">Others</h4>
+      {/* Custom worker types */}
+      {projectCustomWorkerTypes.map((item) => (
+        <div key={item.key} className="flex justify-between items-center gap-3">
+          <span className="text-sm text-gray-700 flex-1 leading-snug">
+            {item.label}
+          </span>
 
-    {workers.others.map((item, index) => (
-      <div key={index} className="flex gap-2 mb-2">
-        <input
-          type="text"
-          placeholder="Department"
-          className="flex-1 px-2 py-1 border rounded"
-          value={item.label}
-          onChange={(e) => {
-            const updated = [...workers.others];
-            updated[index].label = e.target.value;
-            const newWorkers = { ...workers, others: updated };
-            setWorkers(newWorkers);
-            autosaveExtraFields({ workers: newWorkers });
-          }}
-        />
-
-        <input
-          type="number"
-          min={0}
-          className="w-20 px-2 py-1 border rounded text-center"
-          value={item.count}
-          onChange={(e) => {
-            const updated = [...workers.others];
-            updated[index].count = Number(e.target.value);
-            const newWorkers = { ...workers, others: updated };
-            setWorkers(newWorkers);
-            autosaveExtraFields({ workers: newWorkers });
-          }}
-        />
-
-        <button
-          className="text-red-500 text-sm"
-          onClick={() => {
-            const updated = workers.others.filter((_, i) => i !== index);
-            const newWorkers = { ...workers, others: updated };
-            setWorkers(newWorkers);
-            autosaveExtraFields({ workers: newWorkers });
-          }}
-        >
-          ✕
-        </button>
-      </div>
-    ))}
-
-    <button
-      className="mt-2 text-sm text-blue-600 font-semibold"
-      onClick={() => {
-        const newWorkers = {
-          ...workers,
-          others: [...workers.others, { label: "", count: 0 }],
-        };
-        setWorkers(newWorkers);
-        autosaveExtraFields({ workers: newWorkers });
-      }}
-    >
-      + Add Other Department
-    </button>
-  </div>
+          <input
+            type="number"
+            min={0}
+            className="w-20 px-2 py-1 border rounded text-center"
+            value={workers[item.key] ?? 0}
+            onChange={(e) => {
+              const value = Number(e.target.value);
+              const updated = { ...workers, [item.key]: value };
+              setWorkers(updated);
+              autosaveExtraFields({ workers: updated });
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  )}
 </div>
 
 {/* WEATHER SECTION */}
 <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
-  <h3 className="font-semibold text-gray-800 mb-4">Weather Conditions</h3>
+  <h3 className="font-semibold text-gray-800 mb-4">{t.weatherConditions}</h3>
 
   {weather.map((w, index) => (
     <div key={index} className="flex flex-col sm:flex-row gap-2 mb-3">
@@ -1024,12 +1033,12 @@ return (
           autosaveExtraFields({ weather: updated });
         }}
       >
-        <option value="">Select weather</option>
-        <option value="Sunny">Sunny</option>
-        <option value="Cloudy">Cloudy</option>
-        <option value="Rain">Rain</option>
-        <option value="Heavy Rain">Heavy Rain</option>
-        <option value="Thunderstorm">Thunderstorm</option>
+        <option value="">{t.selectWeather}</option>
+        <option value="Sunny">{t.sunny}</option>
+<option value="Cloudy">{t.cloudy}</option>
+<option value="Rain">{t.rain}</option>
+<option value="Heavy Rain">{t.heavyRain}</option>
+<option value="Thunderstorm">{t.thunderstorm}</option>
       </select>
 
       {/* DELETE */}
@@ -1058,14 +1067,14 @@ return (
       autosaveExtraFields({ weather: updated });
     }}
   >
-    + Add Weather Period
+    {t.addWeatherPeriod}
   </button>
 </div>
 
 {/* MATERIALS DELIVERED */}
 <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
   <h3 className="font-semibold text-gray-800 mb-4">
-    Materials Delivered
+    {t.materialsDelivered}
   </h3>
 
   {materials.map((m, index) => (
@@ -1164,14 +1173,14 @@ return (
       autosaveExtraFields({ materials: updated });
     }}
   >
-    + Add Material
+    {t.addMaterial}
   </button>
 </div>
 
 {/* MACHINERY / EQUIPMENT */}
 <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
   <h3 className="font-semibold text-gray-800 mb-4">
-    Machinery / Equipment
+    {t.machineryEquipment}
   </h3>
 
   {equipment.map((e, index) => (
@@ -1267,7 +1276,7 @@ return (
       autosaveExtraFields({ equipment: updated });
     }}
   >
-    + Add Equipment
+    {t.addEquipment}
   </button>
 </div>
 
@@ -1282,7 +1291,7 @@ return (
             shadow active:scale-95 transition
           "
         >
-          {loading ? "Submitting..." : "Submit Report"}
+          {loading ? t.submitting : t.submitReport}
         </button>
       </div>
 

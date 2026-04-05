@@ -7,6 +7,7 @@ import imageCompression from "browser-image-compression";
 import { SparklesIcon } from '@heroicons/react/24/solid'; // or outline if you prefer
 import { CameraIcon, PhotoIcon } from "@heroicons/react/24/solid";
 import { translations } from "@/lib/i18n";
+import { WORKER_LABEL_MAP } from "@/lib/workerTypes";
 import {
   TrashIcon,
   ArrowUturnLeftIcon,
@@ -39,6 +40,7 @@ export default function EditReportPage() {
   const [regenerating, setRegenerating] = useState(false);
   const [rotating, setRotating] = useState<Record<string, boolean>>({});
 
+  
 
   const [images, setImages] = useState<any[]>([]);
   const [summary, setSummary] = useState("");
@@ -54,17 +56,11 @@ export default function EditReportPage() {
   const [equipment, setEquipment] = useState<
   { name: string; qty: string; status: string; note?: string }[]
 >([]);
-  const [workers, setWorkers] = useState({
-    partition: 0,
-    ceiling: 0,
-    mne: 0,
-    flooring: 0,
-    brickwork: 0,
-    carpenter: 0,
-    painter: 0,
-    plumber: 0,
-    others: [] as { label: string; count: number }[],
-  });
+const [workers, setWorkers] = useState<Record<string, number>>({});
+const [projectWorkerTypes, setProjectWorkerTypes] = useState<string[]>([]);
+const [projectCustomWorkerTypes, setProjectCustomWorkerTypes] = useState<
+  { key: string; label: string }[]
+>([]);
 
   async function loadProjectLanguage() {
   const { data, error } = await supabase
@@ -79,14 +75,54 @@ export default function EditReportPage() {
     setProjectLanguage("English");
   }
 }
+
+async function loadProjectWorkerTypes() {
+  const { data, error } = await supabase
+    .from("projects")
+    .select("worker_types, custom_worker_types")
+    .eq("id", projectId)
+    .single();
+
+  if (error) {
+    console.error("Failed to load project worker types:", error);
+    return;
+  }
+
+  const selectedTypes = Array.isArray(data?.worker_types) ? data.worker_types : [];
+  const customTypes = Array.isArray(data?.custom_worker_types)
+    ? data.custom_worker_types
+    : [];
+
+  setProjectWorkerTypes(selectedTypes);
+  setProjectCustomWorkerTypes(customTypes);
+
+  setWorkers((prev) => {
+    const updated = { ...prev };
+
+    selectedTypes.forEach((key) => {
+      if (updated[key] === undefined) updated[key] = 0;
+    });
+
+    customTypes.forEach((item) => {
+      if (item?.key && updated[item.key] === undefined) {
+        updated[item.key] = 0;
+      }
+    });
+
+    return updated;
+  });
+}
   // -----------------------------------------------
   // Load Report + Images
   // -----------------------------------------------
 useEffect(() => {
   loadProjectLanguage();
+  loadProjectWorkerTypes();
   loadReport();
   loadImages();
 }, []);
+
+
 
 async function loadReport() {
   const { data, error } = await supabase
@@ -117,32 +153,10 @@ async function loadReport() {
 
   // 🔥 THIS IS THE FIX
   setWeather(Array.isArray(data.weather) ? data.weather : []);
-  setWorkers(
+setWorkers(
   data.workers && typeof data.workers === "object"
-    ? {
-        partition: data.workers.partition ?? 0,
-        ceiling: data.workers.ceiling ?? 0,
-        mne: data.workers.mne ?? 0,
-        flooring: data.workers.flooring ?? 0,
-        brickwork: data.workers.brickwork ?? 0,
-        carpenter: data.workers.carpenter ?? 0,
-        painter: data.workers.painter ?? 0,
-        plumber: data.workers.plumber?? 0,
-        others: Array.isArray(data.workers.others)
-          ? data.workers.others
-          : [],
-      }
-    : {
-        partition: 0,
-        ceiling: 0,
-        mne: 0,
-        flooring: 0,
-        brickwork: 0,
-        carpenter: 0,
-        painter: 0,
-        plumber: 0,
-        others: [],
-      }
+    ? data.workers
+    : {}
 );
   setMaterials(Array.isArray(data.materials) ? data.materials : []);
   setEquipment(Array.isArray(data.equipment) ? data.equipment : []);
@@ -210,7 +224,7 @@ async function handleSingleUpload(originalFile: File) {
 
     if (uploadError) {
       console.error(uploadError);
-      return alert("Upload failed");
+      return alert(t.uploadFailed);
     }
 
     const url = `https://wnvkfycjjuxjezxggcpg.supabase.co/storage/v1/object/public/report-images/${filePath}`;
@@ -375,7 +389,7 @@ async function rotateAndReplaceImage(img: any, direction: "left" | "right") {
   );
 
   if (!hasSummary && nonEmptyCaptionIds.length === 0) {
-    return alert("Nothing to clean yet.");
+    return alert(t.nothingToCleanYet);
   }
 
   setCleaning(true);
@@ -530,7 +544,7 @@ async function deleteImage(img: any) {
 }
 
 async function cleanSummary() {
-  if (!summary.trim()) return alert("Summary is empty.");
+  if (!summary.trim()) return alert(t.summaryIsEmpty);
   setCleaning(true);
 
   const res = await fetch("/api/clean-summary", {
@@ -686,7 +700,7 @@ return (
       </span>
     ) : (
       <span className="shrink-0 text-[11px] font-semibold px-3 py-1 rounded-full bg-gray-50 text-gray-600 border border-gray-200">
-        Ready
+        {t.ready}
       </span>
     )}
   </div>
@@ -707,9 +721,9 @@ return (
         </div>
 
         <div className="flex-1">
-          <div className="text-sm font-bold leading-tight">Camera</div>
+          <div className="text-sm font-bold leading-tight">{t.camera}</div>
           <div className="text-[10px] opacity-90 mt-0.5">
-            Take a new photo
+            {t.cameraSubtitle}
           </div>
         </div>
       </div>
@@ -742,10 +756,10 @@ return (
 
         <div className="flex-1">
           <div className="text-sm font-bold text-gray-800 leading-tight">
-            Gallery
+            {t.gallery}
           </div>
           <div className="text-[10px] text-gray-500 mt-0.5">
-            Choose multiple
+            {t.gallerySubtitle}
           </div>
         </div>
       </div>
@@ -761,9 +775,9 @@ return (
   </div>
 
   {/* Optional hint line */}
-  <p className="mt-3 text-[11px] text-gray-500">
-    Tip: If camera doesn’t appear, allow camera permission in your phone settings.
-  </p>
+<p className="mt-3 text-[11px] text-gray-500">
+  {t.cameraTip}
+</p>
 </div>
 
 
@@ -831,7 +845,7 @@ return (
       "
     >
       <ArrowUturnLeftIcon className="w-3.5 h-3.5" />
-      {isRotating ? "..." : "Left"}
+      {isRotating ? "..." : t.rotateLeft}
     </button>
 
     <button
@@ -847,7 +861,7 @@ return (
       "
     >
       <ArrowUturnRightIcon className="w-3.5 h-3.5" />
-      {isRotating ? "..." : "Right"}
+      {isRotating ? "..." : t.rotateRight}
     </button>
     <button
   type="button"
@@ -858,7 +872,7 @@ return (
   }
   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-2 rounded-lg"
 >
-  ✏️ Annotate
+  ✏️ {t.annotate}
 </button>
   </div>
 </div>
@@ -952,99 +966,57 @@ return (
 <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
   <h3 className="font-semibold text-gray-800 mb-4">{t.workersOnSite}</h3>
 
-  <div className="space-y-3">
-    {[
-      ["partition", "Partition"],
-      ["ceiling", "Ceiling"],
-      ["mne", "M&E"],
-      ["flooring", "Flooring"],
-      ["brickwork", "Brick Work"],
-      ["carpenter", "Carpenter"],
-      ["painter", "Painter"],
-      ["plumber", "Plumber"],
-    ].map(([key, label]) => (
-      <div key={key} className="flex justify-between items-center">
-        <span className="text-sm text-gray-700">{label}</span>
-        <input
-          type="number"
-          min={0}
-          className="w-20 px-2 py-1 border rounded text-center"
-          value={(workers as any)[key]}
-          onChange={(e) => {
-            const value = Number(e.target.value);
-            setWorkers((prev) => {
-              const updated = { ...prev, [key]: value };
+  {projectWorkerTypes.length === 0 && projectCustomWorkerTypes.length === 0 ? (
+    <p className="text-sm text-gray-500">
+      No worker types selected for this project.
+    </p>
+  ) : (
+    <div className="space-y-3">
+      {/* Standard selected worker types */}
+      {projectWorkerTypes.map((key) => (
+        <div key={key} className="flex justify-between items-center gap-3">
+          <span className="text-sm text-gray-700 flex-1 leading-snug">
+            {WORKER_LABEL_MAP[key] || key}
+          </span>
+
+          <input
+            type="number"
+            min={0}
+            className="w-20 px-2 py-1 border rounded text-center"
+            value={workers[key] ?? 0}
+            onChange={(e) => {
+              const value = Number(e.target.value);
+              const updated = { ...workers, [key]: value };
+              setWorkers(updated);
               autosaveExtraFields({ workers: updated });
-              return updated;
-            });
-          }}
-        />
-      </div>
-    ))}
-  </div>
+            }}
+          />
+        </div>
+      ))}
 
-  {/* OTHERS */}
-  <div className="mt-5">
-    <h4 className="text-sm font-semibold text-gray-700 mb-2">{t.others}</h4>
+      {/* Custom worker types */}
+      {projectCustomWorkerTypes.map((item) => (
+        <div key={item.key} className="flex justify-between items-center gap-3">
+          <span className="text-sm text-gray-700 flex-1 leading-snug">
+            {item.label}
+          </span>
 
-    {workers.others.map((item, index) => (
-      <div key={index} className="flex gap-2 mb-2">
-        <input
-          type="text"
-          placeholder={t.addOtherDepartment}
-          className="flex-1 px-2 py-1 border rounded"
-          value={item.label}
-          onChange={(e) => {
-            const updated = [...workers.others];
-            updated[index].label = e.target.value;
-            const newWorkers = { ...workers, others: updated };
-            setWorkers(newWorkers);
-            autosaveExtraFields({ workers: newWorkers });
-          }}
-        />
-
-        <input
-          type="number"
-          min={0}
-          className="w-20 px-2 py-1 border rounded text-center"
-          value={item.count}
-          onChange={(e) => {
-            const updated = [...workers.others];
-            updated[index].count = Number(e.target.value);
-            const newWorkers = { ...workers, others: updated };
-            setWorkers(newWorkers);
-            autosaveExtraFields({ workers: newWorkers });
-          }}
-        />
-
-        <button
-          className="text-red-500 text-sm"
-          onClick={() => {
-            const updated = workers.others.filter((_, i) => i !== index);
-            const newWorkers = { ...workers, others: updated };
-            setWorkers(newWorkers);
-            autosaveExtraFields({ workers: newWorkers });
-          }}
-        >
-          ✕
-        </button>
-      </div>
-    ))}
-
-    <button
-      className="mt-2 text-sm text-blue-600 font-semibold"
-      onClick={() => {
-        const newWorkers = {
-          ...workers,
-          others: [...workers.others, { label: "", count: 0 }],
-        };
-        setWorkers(newWorkers);
-        autosaveExtraFields({ workers: newWorkers });
-      }}
-    >
-      {t.addOtherDepartment}
-    </button>
-  </div>
+          <input
+            type="number"
+            min={0}
+            className="w-20 px-2 py-1 border rounded text-center"
+            value={workers[item.key] ?? 0}
+            onChange={(e) => {
+              const value = Number(e.target.value);
+              const updated = { ...workers, [item.key]: value };
+              setWorkers(updated);
+              autosaveExtraFields({ workers: updated });
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  )}
 </div>
 
 {/* WEATHER SECTION */}
@@ -1092,11 +1064,11 @@ return (
         }}
       >
         <option value="">{t.selectWeather}</option>
-        <option value="Sunny">Sunny</option>
-        <option value="Cloudy">Cloudy</option>
-        <option value="Rain">Rain</option>
-        <option value="Heavy Rain">Heavy Rain</option>
-        <option value="Thunderstorm">Thunderstorm</option>
+<option value="Sunny">{t.sunny}</option>
+<option value="Cloudy">{t.cloudy}</option>
+<option value="Rain">{t.rain}</option>
+<option value="Heavy Rain">{t.heavyRain}</option>
+<option value="Thunderstorm">{t.thunderstorm}</option>
       </select>
 
       {/* DELETE */}

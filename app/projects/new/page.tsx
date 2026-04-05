@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useAuthGuard } from "@/lib/useAuthGuard";
+import { WORKER_GROUPS } from "@/lib/workerTypes";
 import {
   MapPinIcon,
   LanguageIcon,
@@ -13,12 +14,33 @@ import {
 export default function NewProjectPage() {
   const router = useRouter();
   const { userId, checking } = useAuthGuard();
+  
 
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [outputLanguage, setOutputLanguage] = useState("English");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+  const [workerTypes, setWorkerTypes] = useState<string[]>([]);
+  const [customWorkerTypes, setCustomWorkerTypes] = useState<
+  { key: string; label: string }[]
+>([]);
+
+function makeWorkerKey(label: string) {
+  return label
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "_");
+}
+
+  function toggleWorkerType(key: string) {
+  setWorkerTypes((prev) =>
+    prev.includes(key)
+      ? prev.filter((item) => item !== key)
+      : [...prev, key]
+  );
+}
 
   async function createProject() {
     if (checking) return;
@@ -36,11 +58,13 @@ const { data, error } = await supabase
       location,
       description,
       output_language: outputLanguage,
+      worker_types: workerTypes,
+      custom_worker_types: customWorkerTypes,
       created_by: userId,
     },
   ])
-      .select()
-      .single();
+  .select()
+  .single();
 
     setLoading(false);
 
@@ -156,6 +180,102 @@ const { data, error } = await supabase
                 </div>
               </div>
             </section>
+
+            <section className="rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-4">
+  <div>
+    <h2 className="font-semibold text-gray-800">Worker Types for This Project</h2>
+    <p className="text-sm text-gray-500 mt-1">
+      Select the worker types you want to appear in daily reports.
+    </p>
+  </div>
+
+  {WORKER_GROUPS.map((group) => (
+    <div key={group.title} className="space-y-2">
+      <h3 className="text-sm font-semibold text-gray-700">{group.title}</h3>
+
+      <div className="space-y-2">
+        {group.items.map((item) => {
+          const checked = workerTypes.includes(item.key);
+
+          return (
+            <label
+              key={item.key}
+              className={`
+                flex items-start gap-3 p-3 rounded-xl border transition cursor-pointer
+                ${checked
+                  ? "border-blue-300 bg-blue-50"
+                  : "border-gray-200 bg-white hover:bg-gray-50"}
+              `}
+            >
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={() => toggleWorkerType(item.key)}
+                className="mt-1 w-4 h-4"
+              />
+              <span className="text-sm text-gray-700 leading-relaxed">
+                {item.label}
+              </span>
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  ))}
+</section>
+
+<section className="rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-4">
+  <div>
+    <h2 className="font-semibold text-gray-800">Custom Worker Types</h2>
+    <p className="text-sm text-gray-500 mt-1">
+      Add your own worker types for this project if needed.
+    </p>
+  </div>
+
+  {(customWorkerTypes || []).map((item, index) => (
+    <div key={index} className="flex gap-2 items-center">
+      <input
+        type="text"
+        placeholder="e.g. Welder"
+        className="flex-1 px-4 py-3 rounded-2xl border border-gray-200 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        value={item.label}
+        onChange={(e) => {
+          const updated = [...customWorkerTypes];
+          const label = e.target.value;
+          updated[index] = {
+            key: makeWorkerKey(label),
+            label,
+          };
+          setCustomWorkerTypes(updated);
+        }}
+      />
+
+      <button
+        type="button"
+        onClick={() => {
+          const updated = customWorkerTypes.filter((_, i) => i !== index);
+          setCustomWorkerTypes(updated);
+        }}
+        className="px-3 py-3 rounded-2xl border border-red-200 text-red-600 hover:bg-red-50"
+      >
+        ✕
+      </button>
+    </div>
+  ))}
+
+  <button
+    type="button"
+    onClick={() => {
+      setCustomWorkerTypes((prev) => [
+        ...prev,
+        { key: "", label: "" },
+      ]);
+    }}
+    className="w-full py-3 rounded-2xl border border-dashed border-blue-300 text-blue-600 font-semibold hover:bg-blue-50"
+  >
+    + Add Custom Worker Type
+  </button>
+</section>
 
             {/* Submit */}
             <div className="pt-1">

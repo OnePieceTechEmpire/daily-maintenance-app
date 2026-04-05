@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { FileText, Clock } from "lucide-react";
 import { useAuthGuard } from "@/lib/useAuthGuard";
+import Image from "next/image";
 
 
 
@@ -79,7 +80,19 @@ return (
       <div className="max-w-6xl mx-auto">
 
 <div className="flex justify-between items-center">
-  <h1 className="text-3xl font-bold">Projects</h1>
+  {/* LEFT: Logo + Title */}
+  <div className="flex items-center gap-3">
+    <Image
+      src="/logs.png" // your logo path
+      alt="SiteDiary2U Logo"
+      width={40}
+      height={40}
+      className="rounded-lg"
+      priority
+    />
+
+    <h1 className="text-2xl font-bold">Projects</h1>
+  </div>
 
   <div className="flex items-center gap-3">
     {/* Desktop Add Button */}

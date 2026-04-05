@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuthGuard } from "@/lib/useAuthGuard";
+import ProjectBottomNav from "@/components/ProjectBottomNav";
 import {
   EyeIcon,
     DocumentArrowDownIcon
@@ -129,15 +130,16 @@ return (
   <div className="p-6 rounded-b-3xl">
 
   <div className="max-w-5xl mx-auto flex justify-between items-start">
+    
 
     <div>
-      <h1 className="text-3xl font-bold">{project?.name || "Loading..."}</h1>
+      <h1 className="text-2xl font-bold">{project?.name || "Loading..."}</h1>
             <p className="text-white text-sm mt-1 opacity-90">
         {project?.description}
       </p>
     </div>
 
-    {/* DROPDOWN MENU */}
+    {/* DROPDOWN MENU 
     <div className="relative">
 <button
   onClick={() => setMenuOpen(!menuOpen)}
@@ -177,13 +179,13 @@ return (
           </button>
         </div>
       )}
-    </div>
+    </div>*/}
   </div>
 </div>
 </div>
 
 
-    <div className="max-w-5xl mx-auto p-5 space-y-6">
+    <div className="max-w-5xl mx-auto p-5 pb-28 space-y-6">
 
       {/* DATE SELECTOR CARD */}
       <div className="bg-white shadow-sm border border-gray-200 p-5 rounded-2xl">
@@ -363,6 +365,7 @@ return (
 </div>
 
     </div>
+    <ProjectBottomNav projectId={projectId} />
   </div>
 );
 
