@@ -18,7 +18,7 @@ export default function ProjectBottomNav({ projectId }: Props) {
 
   const items = [
     {
-      label: "Dashboard",
+      label: "Home",
       href: `/projects/${projectId}/dashboard`,
       icon: HomeIcon,
       match: `/projects/${projectId}/dashboard`,

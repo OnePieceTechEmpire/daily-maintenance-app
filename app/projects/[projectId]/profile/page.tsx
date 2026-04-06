@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import ProjectBottomNav from "@/components/ProjectBottomNav";
+
 import { useAuthGuard } from "@/lib/useAuthGuard";
 
 const titleOptions = ["Mr", "Ms", "Ar", "Ir", "Ts", "Dr"];
@@ -42,7 +43,7 @@ export default function ProjectProfilePage() {
   const projectId = params.projectId as string;
 
   const { userId, checking } = useAuthGuard();
-
+  const [menuOpen, setMenuOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [title, setTitle] = useState("Mr");
   const [fullName, setFullName] = useState("");
@@ -150,6 +151,47 @@ export default function ProjectProfilePage() {
             </div>
 
 
+    {/* DROPDOWN MENU */}
+    <div className="relative">
+<button
+  onClick={() => setMenuOpen(!menuOpen)}
+  className="bg-white/20 p-3 rounded-xl hover:bg-white/30 transition flex items-center justify-center"
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth="2"
+    stroke="currentColor"
+    className="w-7 h-7 md:w-8 md:h-8"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+    />
+  </svg>
+</button>
+
+
+      {menuOpen && (
+        <div className="absolute right-0 mt-2 bg-white text-gray-800 shadow-lg rounded-lg w-40 py-2 z-30">
+          <button
+            className="w-full text-left px-4 py-2 hover:bg-gray-100"
+            onClick={() => router.push("/projects")}
+          >
+            My Projects
+          </button>
+
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100"
+              >
+                Logout
+              </button>
+        </div>
+      )}
+    </div>
           </div>
         </div>
       </div>
