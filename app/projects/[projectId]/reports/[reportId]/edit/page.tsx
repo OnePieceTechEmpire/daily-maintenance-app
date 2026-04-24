@@ -56,7 +56,17 @@ export default function EditReportPage() {
   const [equipment, setEquipment] = useState<
   { name: string; qty: string; status: string; note?: string }[]
 >([]);
-const [workers, setWorkers] = useState<Record<string, number>>({});
+type ExtraWorker = {
+  label: string;
+  count: number;
+};
+
+type ReportWorkers = {
+  [key: string]: number | ExtraWorker[] | undefined;
+  others?: ExtraWorker[];
+};
+
+const [workers, setWorkers] = useState<ReportWorkers>({ others: [] });
 const [projectWorkerTypes, setProjectWorkerTypes] = useState<string[]>([]);
 const [projectCustomWorkerTypes, setProjectCustomWorkerTypes] = useState<
   { key: string; label: string }[]
@@ -962,7 +972,7 @@ return (
       </div>
 
 
-      {/* WORKERS SECTION */}
+  {/* WORKERS SECTION */}
 <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-2xl">
   <h3 className="font-semibold text-gray-800 mb-4">{t.workersOnSite}</h3>
 
@@ -983,7 +993,7 @@ return (
             type="number"
             min={0}
             className="w-20 px-2 py-1 border rounded text-center"
-            value={workers[key] ?? 0}
+            value={Number(workers[key] ?? 0)}
             onChange={(e) => {
               const value = Number(e.target.value);
               const updated = { ...workers, [key]: value };
@@ -1005,7 +1015,7 @@ return (
             type="number"
             min={0}
             className="w-20 px-2 py-1 border rounded text-center"
-            value={workers[item.key] ?? 0}
+            value={Number(workers[item.key] ?? 0)}
             onChange={(e) => {
               const value = Number(e.target.value);
               const updated = { ...workers, [item.key]: value };
@@ -1017,6 +1027,106 @@ return (
       ))}
     </div>
   )}
+  
+  {/* One-off workers added for this report */}
+  <div className="mt-5 border-t pt-4 space-y-3">
+    {(workers.others || []).map((item, index) => (
+      <div
+        key={`other-${index}`}
+        className="flex justify-between items-center gap-3"
+      >
+        <input
+          type="text"
+          placeholder="Worker name"
+          className="flex-1 px-3 py-2 border rounded-xl text-sm"
+          value={item.label}
+          onChange={(e) => {
+            setWorkers((prev) => {
+              const updatedOthers = [...(prev.others || [])];
+              updatedOthers[index] = {
+                ...updatedOthers[index],
+                label: e.target.value,
+              };
+
+              const updated: ReportWorkers = {
+                ...prev,
+                others: updatedOthers,
+              };
+
+              autosaveExtraFields({ workers: updated });
+              return updated;
+            });
+          }}
+        />
+
+        <input
+          type="number"
+          min={0}
+          className="w-20 px-2 py-1 border rounded text-center"
+          value={item.count}
+          onChange={(e) => {
+            const value = Number(e.target.value);
+
+            setWorkers((prev) => {
+              const updatedOthers = [...(prev.others || [])];
+              updatedOthers[index] = {
+                ...updatedOthers[index],
+                count: value,
+              };
+
+              const updated: ReportWorkers = {
+                ...prev,
+                others: updatedOthers,
+              };
+
+              autosaveExtraFields({ workers: updated });
+              return updated;
+            });
+          }}
+        />
+
+        <button
+          type="button"
+          onClick={() => {
+            setWorkers((prev) => {
+              const updatedOthers = (prev.others || []).filter(
+                (_, i) => i !== index
+              );
+
+              const updated: ReportWorkers = {
+                ...prev,
+                others: updatedOthers,
+              };
+
+              autosaveExtraFields({ workers: updated });
+              return updated;
+            });
+          }}
+          className="text-red-500 text-sm font-semibold"
+        >
+          ✕
+        </button>
+      </div>
+    ))}
+
+    <button
+      type="button"
+      className="mt-2 text-sm text-blue-600 font-semibold"
+      onClick={() => {
+        setWorkers((prev) => {
+          const updated: ReportWorkers = {
+            ...prev,
+            others: [...(prev.others || []), { label: "", count: 0 }],
+          };
+
+          autosaveExtraFields({ workers: updated });
+          return updated;
+        });
+      }}
+    >
+      + Add Worker for This Report
+    </button>
+  </div>
 </div>
 
 {/* WEATHER SECTION */}

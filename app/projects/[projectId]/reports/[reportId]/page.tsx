@@ -30,6 +30,9 @@ const [projectWorkerTypes, setProjectWorkerTypes] = useState<string[]>([]);
 const [projectCustomWorkerTypes, setProjectCustomWorkerTypes] = useState<
   { key: string; label: string }[]
 >([]);
+const otherWorkers = Array.isArray(workers.others)
+  ? workers.others
+  : [];
 
 async function loadProjectWorkerTypes() {
   const { data, error } = await supabase
@@ -272,23 +275,32 @@ setWorkers(
   {projectWorkerTypes.length === 0 && projectCustomWorkerTypes.length === 0 ? (
     <p className="text-gray-500">{t.noWorkersRecorded || "No workers recorded"}</p>
   ) : (
-    <ul className="space-y-1 text-sm">
-      {projectWorkerTypes
-        .filter((key) => (workers[key] ?? 0) > 0)
-        .map((key) => (
-          <li key={key}>
-            {WORKER_LABEL_MAP[key] || key}: {workers[key]}
-          </li>
-        ))}
+    
+<ul className="space-y-1 text-sm">
+  {projectWorkerTypes
+    .filter((key) => Number(workers[key] ?? 0) > 0)
+    .map((key) => (
+      <li key={key}>
+        {WORKER_LABEL_MAP[key] || key}: {workers[key]}
+      </li>
+    ))}
 
-      {projectCustomWorkerTypes
-        .filter((item) => (workers[item.key] ?? 0) > 0)
-        .map((item) => (
-          <li key={item.key}>
-            {item.label}: {workers[item.key]}
-          </li>
-        ))}
-    </ul>
+  {projectCustomWorkerTypes
+    .filter((item) => Number(workers[item.key] ?? 0) > 0)
+    .map((item) => (
+      <li key={item.key}>
+        {item.label}: {workers[item.key]}
+      </li>
+    ))}
+
+{otherWorkers
+  .filter((item) => item?.label?.trim() && Number(item.count) > 0)
+  .map((item, index) => (
+    <li key={`other-${index}`}>
+      {item.label}: {item.count}
+    </li>
+  ))}
+</ul>
   )}
 </section>
 

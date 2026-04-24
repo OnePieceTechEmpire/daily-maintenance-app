@@ -127,7 +127,20 @@ const visibleCustomWorkers = (customWorkerTypes || [])
     count: safeWorkers[item.key] ?? 0,
   }));
 
-const visibleWorkers = [...visibleStandardWorkers, ...visibleCustomWorkers];
+  const visibleOneOffWorkers = Array.isArray((safeWorkers as any).others)
+  ? (safeWorkers as any).others
+      .filter((item: any) => item?.label?.trim() && Number(item.count) > 0)
+      .map((item: any) => ({
+        label: item.label,
+        count: Number(item.count),
+      }))
+  : [];
+
+const visibleWorkers = [
+  ...visibleStandardWorkers,
+  ...visibleCustomWorkers,
+  ...visibleOneOffWorkers,
+];
 
   return (
     <Document>
