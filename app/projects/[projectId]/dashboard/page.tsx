@@ -118,251 +118,218 @@ async function loadReports() {
 
 
 return (
-  <div className="min-h-screen bg-gray-100">
+  <div className="min-h-screen bg-slate-100">
 
-{/* HEADER */}
-<div className="bg-blue-900 text-white shadow-lg">
+    {/* HEADER */}
+    <div className="bg-blue-900 text-white">
 
-  {/* SAFE AREA TOP */}
-  <div className="h-[env(safe-area-inset-top)]" />
+      {/* SAFE AREA TOP */}
+      <div className="h-[env(safe-area-inset-top)]" />
 
-  {/* HEADER CONTENT */}
-  <div className="p-6 rounded-b-3xl">
+      {/* HEADER CONTENT */}
+      <div className="px-5 pt-5 pb-9 max-w-lg mx-auto">
+        <span className="text-[10px] font-bold tracking-widest text-blue-300 uppercase">
+          Site Dashboard
+        </span>
+        <h1 className="text-[1.65rem] font-bold tracking-tight leading-tight mt-1">
+          {project?.name || "Loading..."}
+        </h1>
+        <p className="text-sm text-blue-200 mt-1.5 leading-relaxed opacity-90">
+          {project?.description}
+        </p>
+      </div>
 
-  <div className="max-w-5xl mx-auto flex justify-between items-start">
-    
-
-    <div>
-      <h1 className="text-2xl font-bold">{project?.name || "Loading..."}</h1>
-            <p className="text-white text-sm mt-1 opacity-90">
-        {project?.description}
-      </p>
+      <div className="h-6 bg-slate-100 rounded-t-[2.5rem]" />
     </div>
 
-    {/* DROPDOWN MENU 
-    <div className="relative">
-<button
-  onClick={() => setMenuOpen(!menuOpen)}
-  className="bg-white/20 p-3 rounded-xl hover:bg-white/30 transition flex items-center justify-center"
->
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    strokeWidth="2"
-    stroke="currentColor"
-    className="w-7 h-7 md:w-8 md:h-8"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-    />
-  </svg>
-</button>
-
-
-      {menuOpen && (
-        <div className="absolute right-0 mt-2 bg-white text-gray-800 shadow-lg rounded-lg w-40 py-2 z-30">
-          <button
-            className="w-full text-left px-4 py-2 hover:bg-gray-100"
-            onClick={() => router.push("/projects")}
-          >
-            {t.myProjects}
-          </button>
-
-          <button
-            className="w-full text-left px-4 py-2 hover:bg-gray-100"
-            onClick={() => router.push(`/projects/${projectId}/reports`)}
-          >
-            {t.allReports}
-          </button>
-        </div>
-      )}
-    </div>*/}
-  </div>
-</div>
-</div>
-
-
-    <div className="max-w-5xl mx-auto p-5 pb-28 space-y-6">
+    <div className="max-w-lg mx-auto px-4 pb-36 space-y-4 -mt-1">
 
       {/* DATE SELECTOR CARD */}
-      <div className="bg-white shadow-sm border border-gray-200 p-5 rounded-2xl">
-        <label className="text-sm font-semibold text-gray-700">{t.selectDate}</label>
+      <div className="bg-white shadow-sm border border-slate-200/70 rounded-2xl p-4">
+        <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase block mb-2">
+          {t.selectDate}
+        </label>
         <input
           type="date"
           value={selectedDate}
-          className="
-            w-full mt-2 px-4 py-2 rounded-lg border border-gray-300 
-            focus:ring-2 focus:ring-blue-400 focus:outline-none
-          "
+          className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50
+            text-slate-800 font-medium min-h-11
+            focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
           onChange={(e) => setSelectedDate(e.target.value)}
         />
       </div>
 
       {/* TODAY'S REPORT CARD */}
-      <div className="bg-white shadow-sm border border-gray-200 p-5 rounded-2xl">
+      <div className="bg-white shadow-sm border border-slate-200/70 rounded-2xl overflow-hidden">
 
-        <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-800">{t.dailyReport}</h2>
-
+        <div className="px-4 pt-4 pb-3.5 flex justify-between items-start border-b border-slate-100">
+          <div>
+            <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase block mb-0.5">
+              Report Status
+            </span>
+            <h2 className="text-base font-bold text-slate-800">{t.dailyReport}</h2>
+          </div>
           <span
             className={`
-              px-3 py-1 text-xs rounded-full font-semibold
+              mt-0.5 px-3 py-1 text-[10px] rounded-full font-bold tracking-wider uppercase border
               ${
                 todayReport?.status === "completed"
-                  ? "bg-green-100 text-green-700"
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                   : todayReport?.status === "draft"
-                  ? "bg-yellow-100 text-yellow-700"
-                  : "bg-gray-200 text-gray-600"
+                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                  : "bg-slate-100 text-slate-500 border-slate-200"
               }
             `}
           >
             {todayReport?.status
-  ? translateStatus(todayReport.status, lang).toUpperCase()
-  : t.notStarted.toUpperCase()}
+              ? translateStatus(todayReport.status, lang).toUpperCase()
+              : t.notStarted.toUpperCase()}
           </span>
         </div>
 
-        {todayReport?.summary && (
-          <p className="mt-3 text-sm text-gray-600 line-clamp-3">
-            {todayReport.summary}
-          </p>
-        )}
+        <div className="px-4 py-4 space-y-3">
+          {todayReport?.summary && (
+            <p className="text-sm text-slate-600 leading-relaxed line-clamp-3">
+              {todayReport.summary}
+            </p>
+          )}
 
-{/* ACTION BUTTON */}
-<button
-  onClick={handleCreateOrContinue}
-  className={`
-    w-full mt-4 text-white py-2 rounded-lg font-semibold
-    active:scale-95 transition
-    ${
-      !todayReport
-        ? "bg-blue-600 hover:bg-blue-700"           // Create
-        : todayReport.status === "draft"
-        ? "bg-yellow-500 hover:bg-yellow-600"       // Continue
-        : "bg-green-600 hover:bg-green-700"         // View
-    }
-  `}
->
-{!todayReport
-  ? t.createReport
-  : todayReport.status === "draft"
-  ? t.continueReport
-  : t.viewReport}
-</button>
+          {/* ACTION BUTTON */}
+          <button
+            onClick={handleCreateOrContinue}
+            className={`
+              w-full py-3.5 rounded-xl font-bold text-sm tracking-wide min-h-11 text-white
+              active:scale-[0.98] transition-all duration-150
+              ${
+                !todayReport
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : todayReport.status === "draft"
+                  ? "bg-amber-500 hover:bg-amber-600"
+                  : "bg-emerald-600 hover:bg-emerald-700"
+              }
+            `}
+          >
+            {!todayReport
+              ? t.createReport
+              : todayReport.status === "draft"
+              ? t.continueReport
+              : t.viewReport}
+          </button>
 
-{todayReport?.status === "completed" && todayReport?.pdf_url && (
-  <div className="flex justify-center mt-3">
-    <a
-      href={getPdfHref(todayReport.pdf_url, todayReport.updated_at)}
-
-      target="_blank"
-      className="flex items-center gap-2 text-red-600 hover:text-red-800 text-sm font-semibold transition active:scale-95"
-    >
-      {/* PDF Icon */}
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth={1.8}
-        stroke="currentColor"
-        className="w-5 h-5"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M19.5 14.25v-2.625a2.625 2.625 0 00-2.625-2.625H7.125A2.625 2.625 0 004.5 11.625v6.75A2.625 2.625 0 007.125 21h9.75A2.625 2.625 0 0019.5 18.375V16.5M12 6.75V15m0 0l-3-3m3 3l3-3"
-        />
-      </svg>
-      {t.downloadPdf}
-    </a>
-    
-  </div>
-)}
-
-        
-        
-        
+          {todayReport?.status === "completed" && todayReport?.pdf_url && (
+            <div className="flex justify-center mt-1">
+              <a
+                href={getPdfHref(todayReport.pdf_url, todayReport.updated_at)}
+                target="_blank"
+                className="flex items-center gap-2 w-full justify-center py-3 rounded-xl
+                  border border-red-200 bg-red-50 text-red-700 font-semibold text-sm
+                  min-h-11 active:scale-[0.98] transition hover:bg-red-100"
+              >
+                {/* PDF Icon */}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.8}
+                  stroke="currentColor"
+                  className="w-4 h-4 shrink-0"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19.5 14.25v-2.625a2.625 2.625 0 00-2.625-2.625H7.125A2.625 2.625 0 004.5 11.625v6.75A2.625 2.625 0 007.125 21h9.75A2.625 2.625 0 0019.5 18.375V16.5M12 6.75V15m0 0l-3-3m3 3l3-3"
+                  />
+                </svg>
+                {t.downloadPdf}
+              </a>
+            </div>
+          )}
+        </div>
       </div>
 
-{/* SUBMITTED REPORTS */}
-<div className="mt-6">
-  <h3 className="text-xl font-semibold text-gray-800 mb-3">{t.recentReports}</h3>
+      {/* SUBMITTED REPORTS */}
+      <div>
+        <div className="px-0.5 mb-3">
+          <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase block mb-0.5">
+            Recent Activity
+          </span>
+          <h3 className="text-base font-bold text-slate-800">{t.recentReports}</h3>
+        </div>
 
-  {reports.length === 0 ? (
-    <p className="text-gray-500">{t.noReportsYet}</p>
-  ) : (
-    <>
-      <div className="space-y-3">
-        {reports.slice(0, 3).map((r) => (
-          <div
-            key={r.id}
-            className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex justify-between items-center"
-          >
-            <div>
-              <p className="font-semibold text-gray-800">{r.report_date}</p>
-              <p
-                className={`
-                  text-xs font-semibold mt-1 inline-block px-2 py-1 rounded
-                  ${
-                    r.status === "completed"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-yellow-100 text-yellow-700"
-                  }
-                `}
-              >
-                {translateStatus(r.status, lang).toUpperCase()}
-              </p>
+        {reports.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-200/70 shadow-sm p-8 text-center">
+            <p className="text-slate-400 text-sm font-medium">{t.noReportsYet}</p>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-2.5">
+              {reports.slice(0, 3).map((r) => (
+                <div
+                  key={r.id}
+                  className="bg-white rounded-2xl border border-slate-200/70 shadow-sm px-4 py-3.5 flex justify-between items-center"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-slate-800 text-sm">{r.report_date}</p>
+                    <span
+                      className={`
+                        inline-block mt-1.5 text-[10px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full border
+                        ${
+                          r.status === "completed"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-amber-50 text-amber-700 border-amber-200"
+                        }
+                      `}
+                    >
+                      {translateStatus(r.status, lang).toUpperCase()}
+                    </span>
+                  </div>
+
+                  {/* ACTION ICONS */}
+                  <div className="flex items-center gap-2 ml-3 shrink-0">
+
+                    {/* VIEW */}
+                    <button
+                      onClick={() => router.push(`/projects/${projectId}/reports/${r.id}`)}
+                      className="flex flex-col items-center justify-center w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 active:bg-indigo-100 transition"
+                    >
+                      <EyeIcon className="w-5 h-5" />
+                      <span className="text-[9px] font-bold mt-0.5 text-indigo-500">View</span>
+                    </button>
+
+                    {/* PDF */}
+                    {r.pdf_url ? (
+                      <a
+                        href={getPdfHref(r.pdf_url, r.updated_at)}
+                        target="_blank"
+                        className="flex flex-col items-center justify-center w-11 h-11 rounded-xl bg-slate-100 text-slate-600 active:bg-slate-200 transition"
+                      >
+                        <DocumentArrowDownIcon className="w-5 h-5" />
+                        <span className="text-[9px] font-bold mt-0.5 text-slate-500">PDF</span>
+                      </a>
+                    ) : (
+                      <div className="w-11 h-11 flex items-center justify-center rounded-xl bg-slate-50">
+                        <span className="text-[9px] text-slate-400 italic leading-tight text-center px-1">{t.pending}</span>
+                      </div>
+                    )}
+
+                  </div>
+                </div>
+              ))}
             </div>
 
-{/* ACTION ICONS */}
-
-<div className="flex items-center gap-6">
-
-  {/* VIEW */}
-  <button
-    onClick={() => router.push(`/projects/${projectId}/reports/${r.id}`)}
-    className="flex flex-col items-center text-indigo-600 hover:text-indigo-800 transition active:scale-95"
-  >
-    <EyeIcon className="w-5 h-5" />
-    <span className="text-[10px] font-medium text-gray-500">View</span>
-  </button>
-
-  {/* PDF */}
-  {r.pdf_url ? (
-    <a
-      href={getPdfHref(r.pdf_url, r.updated_at)}
-
-      target="_blank"
-      className="flex flex-col items-center text-gray-600 hover:text-gray-800 transition active:scale-95"
-    >
-      <DocumentArrowDownIcon className="w-5 h-5" />
-      <span className="text-[10px] font-medium text-gray-500">PDF</span>
-    </a>
-  ) : (
-    <span className="text-[10px] text-gray-400 italic">{t.pending}</span>
-  )}
-
-</div>
-            
-          </div>
-        ))}
+            {/* VIEW MORE BUTTON */}
+            {reports.length > 3 && (
+              <button
+                onClick={() => router.push(`/projects/${projectId}/reports`)}
+                className="mt-3 w-full bg-white border border-slate-200 text-slate-700 px-4 py-3.5 rounded-xl
+                  hover:bg-slate-50 active:scale-[0.98] transition text-sm font-semibold min-h-11"
+              >
+                {t.viewAllReports}
+              </button>
+            )}
+          </>
+        )}
       </div>
-
-      {/* VIEW MORE BUTTON */}
-      {reports.length > 3 && (
-        <button
-          onClick={() => router.push(`/projects/${projectId}/reports`)}
-          className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 active:scale-95"
-        >
-          {t.viewAllReports}
-        </button>
-      )}
-    </>
-  )}
-</div>
 
     </div>
     <ProjectBottomNav projectId={projectId} />
