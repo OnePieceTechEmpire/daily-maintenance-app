@@ -298,15 +298,7 @@ export default function ViewReportPage() {
               <DocumentArrowDownIcon className="w-4 h-4" />
               {t.downloadPdf}
             </a>
-            <button
-              onClick={regeneratePdf}
-              disabled={regenerating}
-              className="w-full py-3 rounded-xl border border-slate-200 text-slate-500 font-semibold text-sm min-h-11 active:scale-[0.98] transition hover:bg-slate-50 disabled:opacity-60"
-            >
-              {regenerating
-                ? <span className="flex items-center justify-center gap-2"><span className="w-4 h-4 border-2 border-slate-300 border-t-slate-500 rounded-full animate-spin" />{t.regeneratingPdf}</span>
-                : t.regeneratePdf}
-            </button>
+
           </div>
         ) : (
           <button

@@ -152,18 +152,17 @@ export default function ReportPDF({
         <View style={styles.header}>
           <View style={styles.headerGoldLine} />
           <View style={styles.headerInner}>
-            <View style={styles.headerLeft}>
-              {projectDescription && (
-                <Text style={styles.headerEyebrow}>{pdfText.project}</Text>
-              )}
-              <Text style={styles.headerTitle}>
-                {projectDescription || projectName}
-              </Text>
-              {projectLocation && (
-                <Text style={styles.headerLocation}>{projectLocation}</Text>
-              )}
-              <Text style={styles.headerReportLabel}>{pdfText.reportTitle}</Text>
-            </View>
+<View style={styles.headerLeft}>
+  <Text style={styles.headerEyebrow}>{pdfText.project}</Text>
+  <Text style={styles.headerTitle}>{projectName}</Text>
+  {projectDescription && (
+    <Text style={styles.headerLocation}>{projectDescription}</Text>
+  )}
+  {projectLocation && (
+    <Text style={styles.headerLocation}>{projectLocation}</Text>
+  )}
+  <Text style={styles.headerReportLabel}>{pdfText.reportTitle}</Text>
+</View>
             <View style={styles.headerDateBox}>
               <Text style={styles.headerDateLabel}>{pdfText.date}</Text>
               <Text style={styles.headerDateValue}>{formatDate(reportDate)}</Text>
@@ -263,12 +262,10 @@ export default function ReportPDF({
           <View style={styles.header}>
             <View style={styles.headerGoldLine} />
             <View style={styles.headerInner}>
-              <View style={styles.headerLeft}>
-                <Text style={styles.headerTitle}>{pdfText.photos}</Text>
-                <Text style={styles.headerLocation}>
-                  {projectDescription || projectName}
-                </Text>
-              </View>
+<View style={styles.headerLeft}>
+  <Text style={styles.headerTitle}>{pdfText.photos}</Text>
+  <Text style={styles.headerLocation}>{projectName}</Text>
+</View>
               <View style={styles.headerDateBox}>
                 <Text style={styles.headerDateLabel}>{pdfText.date}</Text>
                 <Text style={styles.headerDateValue}>{formatDate(reportDate)}</Text>
@@ -276,7 +273,7 @@ export default function ReportPDF({
             </View>
           </View>
 
-          <View style={styles.grid} wrap={false}>
+          <View style={styles.grid}>
             {group.map((img, i) => (
               <View key={i} style={styles.card} wrap={false}>
                 <View style={styles.imageBox}>
@@ -495,7 +492,7 @@ const styles = StyleSheet.create({
   },
 
   imageBox: {
-    height: 200,
+    height: 175,
     border: "1px solid #ddd",
     backgroundColor: "#f4f4f4",
     justifyContent: "center",
